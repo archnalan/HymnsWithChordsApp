@@ -9,6 +9,7 @@ namespace HymnsWithChords.Models
 		public int Id { get; set; }
 
 		[Required]
+		[Display(Name ="SDAH-")]
 		public int Number { get; set; }
 
 		[Required]
@@ -17,10 +18,19 @@ namespace HymnsWithChords.Models
 
 		[NotMapped]
 		public IFormFile? TextUpload { get; set; }
+
+		[StringLength(100)]
         public string? WrittenDateRange { get; set; }
-        public string? WrittenBy { get; set; }
-        public string? History { get; set; }
+
+		[StringLength(100)]
+		public string? WrittenBy { get; set; }
+
+		[StringLength(5000)]
+		public string? History { get; set; }
+
+		[StringLength(200)]
         public string? AddedBy { get; set; }
+
 		public DateTime AddedDate { get; set; }
         public int CategoryId { get; set; }       
 

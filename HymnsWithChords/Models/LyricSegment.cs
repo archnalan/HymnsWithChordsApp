@@ -9,6 +9,7 @@ namespace HymnsWithChords.Models
         public int Id { get; set; }
 
         [Required]
+		[StringLength(200)]
         public string Words { get; set; }
 
 		[StringLength(10)]
