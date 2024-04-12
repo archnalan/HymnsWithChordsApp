@@ -17,10 +17,20 @@ namespace HymnsWithChords.Models
 			ErrorMessage = "Invalid Chord Format!")]
 		public string Chord { get; set; }
 
-		[Required]
-        public int HymnId { get; set; }
+		//Navigation prop for verse,chorus and bridge
+        public int? VerseId { get; set; }
+        public int? ChorusId { get; set; }
+        public int? BridgeId { get; set; }
 
-        [ForeignKey(nameof(HymnId))]
-        public virtual Hymn Hymn { get; set; }
+
+		[ForeignKey(nameof(VerseId))]
+        public virtual Verse Verse { get; set; }
+		
+		[ForeignKey(nameof(ChorusId))]
+        public virtual Chorus Chorus { get; set; }
+		
+		[ForeignKey(nameof(BridgeId))]
+		public virtual Bridge Bridge { get; set; }
+
     }
 }
