@@ -12,6 +12,9 @@ namespace HymnsWithChords.Data
 		}
         public DbSet<Hymn> Hymns { get; set; }
         public DbSet<Category> Categories { get; set; }
+		public DbSet<Verse> Verses { get; set; }
+		public DbSet<Bridge> Bridges { get; set; }
+		public DbSet<Chorus> Choruses { get; set; }
         public DbSet<LyricSegment> LyricSegments{ get; set; }
 
 		public DbSet<UserFeedback> UserFeedback { get; set; }
