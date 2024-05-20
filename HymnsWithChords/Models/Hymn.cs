@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HymnsWithChords.Data;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HymnsWithChords.Models
@@ -17,6 +18,7 @@ namespace HymnsWithChords.Models
 		public string Title { get; set; }
 
 		[NotMapped]
+		[TextFileValidation(".txt", ".pdf")]
 		public IFormFile? TextUpload { get; set; }
 
 		[StringLength(255)]
