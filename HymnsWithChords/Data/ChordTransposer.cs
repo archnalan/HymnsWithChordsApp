@@ -42,26 +42,29 @@ namespace HymnsWithChords.Data
 			return _originalChords.Select(chord => TransposeChord(chord, semitones)).ToArray();
 		}
 
-		private string TransposeChord(string chord, int semitones)
-		{
+		public string TransposeChord(string chord, int semitones)
+		{			
+			chord = chord.Trim().Replace(" ", "");//Remove any spaces
+
 			var match = System.Text.RegularExpressions
-				.Regex.Match(chord, @"([A-G]#?b?)([^/]*)(\/[A-G]#?b?)?");
+				.Regex.Match(chord, @"^([A-G])(#|b|##|bb)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b)?)?$"
+);
 			if(!match.Success) return chord;
 
-			var rootNote = match.Groups[1].Value;
-			var chordQuality = match.Groups[2].Value;
-			var bassNote = match.Groups.Count>2? 
-				match.Groups[3].Value.TrimStart('/'):string.Empty;
+			var rootNote = match.Groups[1].Value + match.Groups[2].Value;
+			var chordQuality = match.Groups[3].Value + match.Groups[4];
+			var bassNote = (string.IsNullOrEmpty(match.Groups[5].Value) == false) ? 
+				match.Groups[5].Value.TrimStart('/'):string.Empty;
 
 			//call the transposeNote method
 			var transposedRoot = TransposeNote(rootNote, semitones);
 			var transposedBass = !string.IsNullOrEmpty(bassNote)? 
 				TransposeNote(bassNote, semitones): string.Empty;
 
-			return $"{transposedRoot}{chordQuality}{(string.IsNullOrEmpty(transposedBass)?"":"/ "+ transposedBass)}";
+			return $"{transposedRoot}{chordQuality}{(string.IsNullOrEmpty(transposedBass)?"":"/"+ transposedBass)}";
 		}
 
-		private string TransposeNote(string note, int semitones)
+		public string TransposeNote(string note, int semitones)
 		{
 			//Determine which scale was used
 			var scale = _sharpChromaticScale.ContainsKey(note) ?
@@ -69,6 +72,7 @@ namespace HymnsWithChords.Data
 
 			//Get and manipulate the note in scale
 			var noteIndex = scale[note];
+			if (noteIndex == -1) return note;
 			var newIndex = (noteIndex + semitones + 12) % 12;
 
 			var newNote = scale.FirstOrDefault(x => x.Value == newIndex).Key;
