@@ -9,7 +9,7 @@ namespace HymnalUI
 			InitializeComponent();
 		}
 
-		public void uploadFile_Click(object sender, EventArgs e)
+		public  async void uploadFile_Click(object sender, EventArgs e)
 		{
 			statusTool.Text = "Loading...";
 			OpenFileDialog fileDialog = new OpenFileDialog();
@@ -35,14 +35,14 @@ namespace HymnalUI
 					switch (fileExtension)
 					{
 						case ".txt":
-							lyrics =LyricExtractor.ExtractTxtFile(filePath); 
+							lyrics = await LyricExtractor.ExtractTxtFileAsync(filePath); 
 								break;
 						case ".doc":
 						case ".docx":
-							lyrics = LyricExtractor.ExtractWordDocFile(filePath); 
+							lyrics = await LyricExtractor.ExtractWordDocAsync(filePath); 
 								break;
 						case ".pdf":
-							lyrics= LyricExtractor.ExtractPdfLyricFile(filePath);
+							lyrics= await LyricExtractor.ExtractPdfAsyc(filePath);
 								break;
 						default:
 							MessageBox.Show("Unsupported file Type");

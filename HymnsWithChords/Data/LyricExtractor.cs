@@ -9,66 +9,68 @@ namespace HymnsWithChords.Data
 {
 	public class LyricExtractor
 	{
-		public static List<string> ExtractTxtFile(string filePath)
+		public static async Task<List<string>> ExtractTxtFileAsync(string filePath)
 		{
-			List<string> Lyrics = new List<string>();
-
-			foreach (string line in File.ReadAllLines(filePath))
-			{
-				Lyrics.Add(line);
-			}
-			return Lyrics;
+			return await Task.Run(() => File.ReadAllLines(filePath).ToList());
 		}
 
-		public static List<string> ExtractWordDocFile(string filePath)
+		public static async Task<List<string>> ExtractWordDocAsync(string filePath)
 		{
-			List<string> Lyrics = new List<string>();
-			using (WordprocessingDocument wordDoc = 
-				WordprocessingDocument.Open(filePath, false))
+			return await Task.Run(() =>
 			{
-				//Get where the content lives
-				var mainPart = wordDoc.MainDocumentPart;
-
-				//Get all text from the document
-				var paragraphs = mainPart.Document.Body.Descendants<Paragraph>();
-
-				foreach (Paragraph paragraph in paragraphs)
+				List<string> Lyrics = new List<string>();
+				using (WordprocessingDocument wordDoc =
+					WordprocessingDocument.Open(filePath, false))
 				{
-					Lyrics.Add(paragraph.ToString());
+					//Get where the content lives
+					var mainPart = wordDoc.MainDocumentPart;
+
+					//Get all text from the document
+					var paragraphs = mainPart.Document.Body.Descendants<Paragraph>();
+
+					foreach (Paragraph paragraph in paragraphs)
+					{
+						Lyrics.Add(paragraph.InnerText);
+					}
 				}
 				return Lyrics;
-			}
+			});
 		}
-		public static List<string> ExtractPdfLyricFile(string pdfPath)
+		public static async Task<List<string>> ExtractPdfAsyc(string pdfPath)
 		{
 			using (PdfReader reader = new PdfReader(pdfPath))
 			
 			using(PdfDocument document = new PdfDocument(reader)) 
 			{
-				List<string> Lyrics = new List<string>();
-				ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-
-				for (int i = 1; i <= document.GetNumberOfPages(); i++)
+				return await Task.Run(() =>
 				{
-					string pageText = PdfTextExtractor
-										.GetTextFromPage(document.GetPage(i), strategy);
+					List<string> Lyrics = new List<string>();
+					ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
 
-					//split the text into Lines
-					string[] lines = Regex.Split(pageText, 
-									@"\r\n|\r|\n|(?:\r\n)+|(?:\r)+|(?:\n)+");
-
-					foreach(string line in lines)
+					for (int i = 1; i <= document.GetNumberOfPages(); i++)
 					{
-						//Split lines into words and add to List
-						/*var words = line.Split(new[] {' '}, 
-							StringSplitOptions.RemoveEmptyEntries);
+						string pageText = PdfTextExtractor
+											.GetTextFromPage(document.GetPage(i), strategy);
 
-						Lyrics.AddRange(words);*/
-						Lyrics.Add(line);
-					}					
+						//split the text into Lines
+						string[] lines = Regex.Split(pageText,
+										@"\r\n|\r|\n|(?:\r\n)+|(?:\r)+|(?:\n)+");
 
-				}
-				return Lyrics;
+						foreach (string line in lines)
+						{
+							//Split lines into words and add to List
+							/*var words = line.Split(new[] {' '}, 
+								StringSplitOptions.RemoveEmptyEntries);
+
+							Lyrics.AddRange(words);*/
+							 Lyrics.Add(line);
+						}
+
+					}
+					return Lyrics;
+
+				});
+				
 			}
 			
 		}

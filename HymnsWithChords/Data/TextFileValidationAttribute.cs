@@ -33,59 +33,17 @@ namespace HymnsWithChords.Data
 			if(file.ContentType == "application/msword"|| file.ContentType ==
 				"application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 			{
-				try
+				if (!ValidateWordDocument(file))
 				{
-					using (var memStream = new MemoryStream())
-					{
-						file.CopyTo(memStream);
-						memStream.Position = 0;
-
-						using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(memStream, false))
-						{
-							var mainPart = wordDoc.MainDocumentPart;
-
-							var textElements = mainPart.Document.Descendants<Text>()
-												.Where(t => string.IsNullOrWhiteSpace(t.Text));
-
-							if (!textElements.Any()) return new ValidationResult("The document does not contain readable text");
-						}
-					}
-
-				}catch(Exception ex)
-				{
-					return new ValidationResult($"An Error occured while Validating Word Document: {ex.Message}");
+					return new ValidationResult("The document does not cotain readable text");
 				}
 			}
 
 			if(file.ContentType == "application/pdf")
 			{
-				try
+				if(!ValidatePdfDocument(file))
 				{
-					using(var memStream = new MemoryStream())
-					{
-						file.CopyTo(memStream);
-						memStream.Position = 0;
-
-						var pdfReader = new PdfReader(memStream);
-						var pdfDocument = new PdfDocument(pdfReader);
-						StringBuilder text = new StringBuilder();
-
-						for(int i =1; i <= pdfDocument.GetNumberOfPages(); i++)
-						{
-							string pageContent = PdfTextExtractor.GetTextFromPage(pdfDocument.GetPage(i), 
-							new SimpleTextExtractionStrategy());
-							text.Append(pageContent);
-						}
-
-						if (string.IsNullOrWhiteSpace(text.ToString()))
-						{
-							return new ValidationResult("The pdf does not contain readable text");
-						}							
-					}
-				}catch (Exception ex)
-				{
-					return new ValidationResult(
-						$"An Error Occured while Validating the PDF: {ex.Message}");
+					return new ValidationResult("The PDF does not contain readle Text");
 				}
 			}
 			
@@ -99,24 +57,51 @@ namespace HymnsWithChords.Data
 		public bool IsValidContentType(IFormFile file)
 		{
 			return (file.ContentType == "text/plain" ||  //For .txt
-				file.ContentType == "application/pdf"||  // For .pdf
-				file.ContentType == "application/msword"|| //For .doc
+				file.ContentType == "application/pdf" ||  // For .pdf
+				file.ContentType == "application/msword" || //For .doc
 				file.ContentType ==
 				"application/vnd.openxmlformats-officedocument.wordprocessingml.document"); //For .docx
 		}
 
-		public static bool ValidateWordDocument(string filePath)
+		public static bool ValidateWordDocument(IFormFile file)
 		{
-			//Open the Word document
-			using(WordprocessingDocument wordDoc = WordprocessingDocument.Open(filePath, false))
+			using (var memStream = new MemoryStream())
 			{
-				var mainPart = wordDoc.MainDocumentPart;
+				file.CopyTo(memStream);
+				memStream.Position = 0;
 
-				var textElements = mainPart.Document.Descendants<Text>()
-										   .Where(t => !string.IsNullOrWhiteSpace(t.Text));
+				using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(memStream, false))
+				{
+					var mainPart = wordDoc.MainDocumentPart;
 
-				return textElements.Any();
+					var textElements = mainPart.Document.Descendants<Text>() //such that the doc is not empty
+										.Where(t => (string.IsNullOrWhiteSpace(t.Text) == false));
+
+					return textElements.Any();
+				}
 			}
 		}
-    }
+		public static bool ValidatePdfDocument(IFormFile file)
+		{
+			using (var memStream = new MemoryStream())
+			{
+				file.CopyTo(memStream);
+				memStream.Position = 0;
+
+				var pdfReader = new PdfReader(memStream);
+				var pdfDocument = new PdfDocument(pdfReader);
+				StringBuilder text = new StringBuilder();
+
+				for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+				{
+					string pageContent = PdfTextExtractor.GetTextFromPage(pdfDocument.GetPage(i),
+					new SimpleTextExtractionStrategy());
+					text.Append(pageContent);
+				}
+				 // check that it is true that we have no empty file
+				return (string.IsNullOrWhiteSpace(text.ToString()) == false);
+				
+			}
+		}
+	}
 }
