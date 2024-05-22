@@ -1,3 +1,7 @@
+using HymnsWithChords.Controllers;
+using HymnsWithChords.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace HymnalUI
 {
 	internal static class Program
@@ -8,10 +12,28 @@ namespace HymnalUI
 		[STAThread]
 		static void Main()
 		{
-			// To customize application configuration such as set high DPI settings or default font,
-			// see https://aka.ms/applicationconfiguration.
 			ApplicationConfiguration.Initialize();
-			Application.Run(new SdaHymnalUI());
+			var services = new ServiceCollection();
+
+			configurationServices(services);
+
+			using (var service = services.BuildServiceProvider())
+			{
+				var mainForm = service.GetRequiredService<SdaHymnalUI>();
+				// To customize application configuration such as set high DPI settings or default font,
+				// see https://aka.ms/applicationconfiguration.
+				
+				Application.Run(mainForm);
+
+			}
+			
+		}
+		private static void configurationServices(ServiceCollection services)
+		{
+			services.AddSingleton<LyricHandlerFactory>();
+			services.AddSingleton<LyricExtractionController>();
+
+			services.AddScoped<SdaHymnalUI>();
 		}
 	}
 }

@@ -1,14 +1,18 @@
+using HymnsWithChords.Controllers;
 using HymnsWithChords.Data;
+using HymnsWithChords.Interfaces;
 
 namespace HymnalUI
 {
 	public partial class SdaHymnalUI : Form
 	{
-		public SdaHymnalUI()
+		private readonly LyricExtractionController _lyricExtract;
+		public SdaHymnalUI(LyricExtractionController lyricExtract)
 		{
 			InitializeComponent();
+			_lyricExtract = lyricExtract;
 		}
-
+		
 		public async void uploadFile_Click(object sender, EventArgs e)
 		{
 			statusTool.Text = "Loading...";
@@ -22,41 +26,18 @@ namespace HymnalUI
 			if (fileDialog.ShowDialog() == DialogResult.OK)
 			{
 				string filePath = fileDialog.FileName;
-				string fileExtension = Path.GetExtension(filePath).ToLower();
-				List<string> lyrics = new List<string>();
-
-
-				TextFileValidationAttribute validator = new
-					TextFileValidationAttribute(".txt", ".doc", ".docx", ".pdf");
-
-				if (validator.IsValidFileType(filePath))
-				{
-					//Extract the text
-					switch (fileExtension)
-					{
-						case ".txt":
-							lyrics = await LyricExtractor.ExtractTxtFileAsync(filePath);
-							break;
-						case ".doc":
-						case ".docx":
-							lyrics = await LyricExtractor.ExtractWordDocAsync(filePath);
-							break;
-						case ".pdf":
-							lyrics = await LyricExtractor.ExtractPdfAsyc(filePath);
-							break;
-						default:
-							MessageBox.Show("Unsupported file Type");
-							break;
-					}
+				try
+				{	//Extract the text
+					List<string> lyrics = await _lyricExtract.GetLyricsAsync(filePath);					
 
 					//Showing the results
 
 					extractedText.Text = String.Join(Environment.NewLine, lyrics);
 					statusTool.Text = "Ready";
 				}
-				else
+				catch (NotSupportedException ex) 
 				{
-					MessageBox.Show("Invalid FileType. Please select a valid text, word, or pdf file");
+					MessageBox.Show($"Error: {ex.Message}");
 					statusTool.Text = "ERROR";
 				}
 

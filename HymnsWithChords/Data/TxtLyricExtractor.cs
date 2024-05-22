@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
+using HymnsWithChords.Interfaces;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -7,14 +8,17 @@ using System.Text.RegularExpressions;
 
 namespace HymnsWithChords.Data
 {
-	public class LyricExtractor
+	public class TxtLyricExtractor:ILyricHandler
 	{
-		public static async Task<List<string>> ExtractTxtFileAsync(string filePath)
+		public async Task<List<string>> ExtractLyricsAsync(string filePath)
 		{
 			return await Task.Run(() => File.ReadAllLines(filePath).ToList());
 		}
-
-		public static async Task<List<string>> ExtractWordDocAsync(string filePath)
+		
+	}
+	public class WordDocExtractor:ILyricHandler
+	{
+		public async Task<List<string>> ExtractLyricsAsync(string filePath)
 		{
 			return await Task.Run(() =>
 			{
@@ -36,11 +40,14 @@ namespace HymnsWithChords.Data
 				return Lyrics;
 			});
 		}
-		public static async Task<List<string>> ExtractPdfAsyc(string pdfPath)
+	}
+	public class PdfExtractor:ILyricHandler
+	{
+		public async Task<List<string>> ExtractLyricsAsync(string pdfPath)
 		{
 			using (PdfReader reader = new PdfReader(pdfPath))
-			
-			using(PdfDocument document = new PdfDocument(reader)) 
+
+			using (PdfDocument document = new PdfDocument(reader))
 			{
 				return await Task.Run(() =>
 				{
@@ -63,17 +70,16 @@ namespace HymnsWithChords.Data
 								StringSplitOptions.RemoveEmptyEntries);
 
 							Lyrics.AddRange(words);*/
-							 Lyrics.Add(line);
+							Lyrics.Add(line);
 						}
 
 					}
 					return Lyrics;
 
 				});
-				
+
 			}
-			
+
 		}
-		
 	}
 }

@@ -127,7 +127,7 @@
 			inputOne.ReadOnly = true;
 			inputOne.Size = new Size(180, 42);
 			inputOne.TabIndex = 3;
-			inputOne.Text = "Bdim7";
+			inputOne.Text = "Bb/F#";
 			inputOne.TextAlign = HorizontalAlignment.Center;
 			// 
 			// inputTwo
@@ -138,7 +138,7 @@
 			inputTwo.ReadOnly = true;
 			inputTwo.Size = new Size(193, 42);
 			inputTwo.TabIndex = 3;
-			inputTwo.Text = "Gm7/E";
+			inputTwo.Text = "Gadd9";
 			inputTwo.TextAlign = HorizontalAlignment.Center;
 			// 
 			// SdaHymnalUI

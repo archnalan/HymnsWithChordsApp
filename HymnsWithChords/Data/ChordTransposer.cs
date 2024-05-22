@@ -1,13 +1,15 @@
-﻿using System;
+﻿using HymnsWithChords.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace HymnsWithChords.Data
 {
-	public class ChordTransposer
+	public class ChordTransposer:IChordHandler
 	{
 		private readonly Dictionary<string, int> _sharpChromaticScale;
 		private readonly Dictionary<string, int> _flatChromaticScale;
+		private  Dictionary<string, int> _usedScale;
 
 		private List<string> _originalChords;
 		public ChordTransposer()
@@ -30,6 +32,19 @@ namespace HymnsWithChords.Data
 		public void StoreOriginalChords(string[] chords)
 		{
 			_originalChords = chords.ToList();
+			_usedScale = DetermineScale(_originalChords);
+		}
+
+		public Dictionary<string, int> DetermineScale(List<string> chords)
+		{
+			int sharpCount = chords.Sum(chord=>chord.Count(c=>c=='#'));
+			int flatCount = chords.Sum(chord => chord.Count(c => c == 'b'));
+
+			if (flatCount > sharpCount) return _flatChromaticScale;
+
+			if(sharpCount > flatCount) return _sharpChromaticScale;
+
+			return _sharpChromaticScale;
 		}
 
 		public string[] ResetChords()
@@ -47,7 +62,7 @@ namespace HymnsWithChords.Data
 			chord = chord.Trim().Replace(" ", "");//Remove any spaces
 
 			var match = System.Text.RegularExpressions
-				.Regex.Match(chord, @"^([A-G])(#|b|##|bb)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b)?)?$"
+				.Regex.Match(chord, @"^([A-G])(#|b)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b)?)?$"
 );
 			if(!match.Success) return chord;
 
@@ -67,16 +82,23 @@ namespace HymnsWithChords.Data
 		public string TransposeNote(string note, int semitones)
 		{
 			//Determine which scale was used
-			var scale = _sharpChromaticScale.ContainsKey(note) ?
-				_sharpChromaticScale : _flatChromaticScale;
+			var scale = _usedScale;
 
-			//Get and manipulate the note in scale
-			var noteIndex = scale[note];
-			if (noteIndex == -1) return note;
-			var newIndex = (noteIndex + semitones + 12) % 12;
+			try
+			{
+				//Get and manipulate the note in scale
+				var noteIndex = scale[note];
+				if (noteIndex == -1) return note;
+				var newIndex = (noteIndex + semitones + 12) % 12;
 
-			var newNote = scale.FirstOrDefault(x => x.Value == newIndex).Key;
-			return newNote;
+				var newNote = scale.FirstOrDefault(x => x.Value == newIndex).Key;
+				return newNote;
+
+			}
+			catch (Exception ex)
+			{
+				return $"Error: {ex.Message}";
+			}
 		}
 	}
 }
