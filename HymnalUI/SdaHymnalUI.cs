@@ -1,6 +1,7 @@
 using HymnsWithChords.Controllers;
 using HymnsWithChords.Data;
-using HymnsWithChords.Interfaces;
+using Microsoft.AspNetCore.Http;
+using System.Net.Mime;
 
 namespace HymnalUI
 {
@@ -27,13 +28,14 @@ namespace HymnalUI
 			{
 				string filePath = fileDialog.FileName;
 				try
-				{	//Extract the text
-					List<string> lyrics = await _lyricExtract.GetLyricsAsync(filePath);					
+				{                       //Extract the text
+					List<string> lyrics = await _lyricExtract.GetLyricsAsync(filePath);
 
 					//Showing the results
 
 					extractedText.Text = String.Join(Environment.NewLine, lyrics);
 					statusTool.Text = "Ready";
+
 				}
 				catch (NotSupportedException ex) 
 				{

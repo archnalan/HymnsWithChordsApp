@@ -1,4 +1,5 @@
 using HymnsWithChords.Controllers;
+using HymnsWithChords.Data;
 using HymnsWithChords.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,7 +16,10 @@ namespace HymnalUI
 			ApplicationConfiguration.Initialize();
 			var services = new ServiceCollection();
 
-			configurationServices(services);
+			services.AddSingleton<ILyricHandler, LyricExtractor>();
+			services.AddSingleton<LyricExtractionController>();
+			
+			services.AddScoped<SdaHymnalUI>();			
 
 			using (var service = services.BuildServiceProvider())
 			{
@@ -28,12 +32,6 @@ namespace HymnalUI
 			}
 			
 		}
-		private static void configurationServices(ServiceCollection services)
-		{
-			services.AddSingleton<LyricHandlerFactory>();
-			services.AddSingleton<LyricExtractionController>();
-
-			services.AddScoped<SdaHymnalUI>();
-		}
+		
 	}
 }

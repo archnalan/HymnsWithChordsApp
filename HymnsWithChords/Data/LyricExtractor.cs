@@ -8,17 +8,13 @@ using System.Text.RegularExpressions;
 
 namespace HymnsWithChords.Data
 {
-	public class TxtLyricExtractor:ILyricHandler
+	public class LyricExtractor:ILyricHandler
 	{
-		public async Task<List<string>> ExtractLyricsAsync(string filePath)
+		public async Task<List<string>> ExtractTxtFileAsync(string filePath)
 		{
 			return await Task.Run(() => File.ReadAllLines(filePath).ToList());
 		}
-		
-	}
-	public class WordDocExtractor:ILyricHandler
-	{
-		public async Task<List<string>> ExtractLyricsAsync(string filePath)
+		public async Task<List<string>> ExtractWordDocAsync(string filePath)
 		{
 			return await Task.Run(() =>
 			{
@@ -40,10 +36,7 @@ namespace HymnsWithChords.Data
 				return Lyrics;
 			});
 		}
-	}
-	public class PdfExtractor:ILyricHandler
-	{
-		public async Task<List<string>> ExtractLyricsAsync(string pdfPath)
+		public async Task<List<string>> ExtractPdfAsync(string pdfPath)
 		{
 			using (PdfReader reader = new PdfReader(pdfPath))
 
@@ -81,5 +74,7 @@ namespace HymnsWithChords.Data
 			}
 
 		}
+
 	}
+
 }

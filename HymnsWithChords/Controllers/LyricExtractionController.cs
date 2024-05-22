@@ -6,21 +6,40 @@ namespace HymnsWithChords.Controllers
 {
 	public class LyricExtractionController : Controller
 	{
-		private readonly LyricHandlerFactory _lyricFactory;
+		private readonly ILyricHandler _lyricHandler;
 		private readonly TextFileValidationAttribute _validator; 					
 
-		public LyricExtractionController(LyricHandlerFactory lyricFactory)
+		public LyricExtractionController(ILyricHandler lyricHandler)
         {
-            _lyricFactory = lyricFactory;
+            _lyricHandler = lyricHandler;
 			_validator= new TextFileValidationAttribute(".txt", ".doc", ".docx", ".pdf");
 		}
-        public async Task<List<string>> GetLyricsAsync(string filePath)
+        public async Task<List<string>> GetLyricsAsync( string filePath)
 		{
+			if (filePath == null) 
+				throw new InvalidOperationException("Valid file name is required.");
+
 			if ((_validator.IsValidFileType(filePath)) == false)
 				throw new InvalidOperationException("Invalid File Type.");
 
-			var lyricHandler = _lyricFactory.GetLyricHandler(filePath);
-			return await lyricHandler.ExtractLyricsAsync(filePath);
+			string fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
+
+			switch (fileExtension)
+			{
+				case ".txt":
+					return await _lyricHandler.ExtractTxtFileAsync(filePath);
+
+				case ".doc":
+				case ".docx":
+					return await _lyricHandler.ExtractWordDocAsync(filePath);
+
+				case ".pdf":
+					return await _lyricHandler.ExtractPdfAsync(filePath);
+
+				default:
+					throw new NotSupportedException("Unsupported file Type");
+
+			}			
 		}
 	}
 }
