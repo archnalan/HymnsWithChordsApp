@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using HymnsWithChords.Data;
 using HymnsWithChords.Models;
 using Microsoft.AspNetCore.Identity;
@@ -15,9 +16,12 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 	.AddEntityFrameworkStores<HymnDbContext>();
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddLogging();
 //builder.Services.AddScoped<TextFileUploadService>();
 
 var app = builder.Build();
+
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -29,8 +33,7 @@ using (var scope = app.Services.CreateScope())
 		CategoryData.Initialize(services);
 	}
 	catch(Exception ex)
-	{
-		var logger = services.GetRequiredService<ILogger<Program>>();
+	{		
 		logger.LogError(ex, "An Error occured when while seeding data in the Database");
 	}
 }

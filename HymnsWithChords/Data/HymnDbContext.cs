@@ -69,6 +69,12 @@ namespace HymnsWithChords.Data
 				.WithMany(hm => hm.Feedback)
 				.HasForeignKey(fb => fb.HymnId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<Hymn>()
+				.HasOne(hm => hm.Category)
+				.WithMany(cat => cat.Hymns)
+				.HasForeignKey(hm => hm.CategoryId)
+				.OnDelete(DeleteBehavior.Restrict);
 		}
 	}
 }

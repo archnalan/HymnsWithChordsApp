@@ -18,4 +18,8 @@
     <PackageReference Include="OpenXmlDocument.WordProcessing" Version="1.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ViewModels\" />
+  </ItemGroup>
+
 </Project>

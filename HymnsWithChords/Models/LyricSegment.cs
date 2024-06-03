@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HymnsWithChords.Data;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HymnsWithChords.Models
@@ -12,8 +13,15 @@ namespace HymnsWithChords.Models
 		[StringLength(200)]
         public string Lyric { get; set; }		
 		
-		public int LyricOrder { get; set; }		
-		
+		public int LyricOrder { get; set; }
+
+		[NotMapped]
+		[TextFileValidation(".txt", ".pdf")]
+		public IFormFile? LyricUpload { get; set; }
+
+		[StringLength(255)]
+		public string? LyricFilePath { get; set; }
+
 		//Navigation prop for verse,chorus and bridge and chord
 		public int? VerseId { get; set; }
         public int? ChorusId { get; set; }

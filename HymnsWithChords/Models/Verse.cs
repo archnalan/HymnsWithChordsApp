@@ -8,7 +8,7 @@ namespace HymnsWithChords.Models
 		[Key]
 		public int Id { get; set; }
 
-		[Range(0, 12)]
+		[Range(0, 12)]		
 		public int Number { get; set; }
 
 		public int HymnId { get; set; }
