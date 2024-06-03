@@ -10,24 +10,15 @@ namespace HymnsWithChords.Models
 
         [Required]
 		[StringLength(200)]
-        public string Lyric { get; set; }
-
-		[StringLength(10)]
-		[RegularExpression(@"^([A-G])(#|b|##|bb)?(\d+|m|maj|min|sus|aug|dim|add)?(/A-G?)?$", 
-			ErrorMessage = "Invalid Chord Format!")]
-		public string Chord { get; set; }
-		public int LyricOrder { get; set; }
-
-		[NotMapped]
-		public IFormFile ChordChart { get; set; }
-
-		[StringLength(255)]
-		public string? ChordChartFilePath { get; set; }
-
-		//Navigation prop for verse,chorus and bridge
+        public string Lyric { get; set; }		
+		
+		public int LyricOrder { get; set; }		
+		
+		//Navigation prop for verse,chorus and bridge and chord
 		public int? VerseId { get; set; }
         public int? ChorusId { get; set; }
         public int? BridgeId { get; set; }
+		public int? ChordId { get; set; }
 
 
 		[ForeignKey(nameof(VerseId))]
@@ -39,5 +30,8 @@ namespace HymnsWithChords.Models
 		[ForeignKey(nameof(BridgeId))]
 		public virtual Bridge Bridge { get; set; }
 
-    }
+		[ForeignKey(nameof(ChordId))]
+		public virtual Chord Chord { get; set; }
+
+	}
 }

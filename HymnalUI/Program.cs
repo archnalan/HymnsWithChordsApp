@@ -17,6 +17,7 @@ namespace HymnalUI
 			var services = new ServiceCollection();
 
 			services.AddSingleton<ILyricHandler, LyricExtractor>();
+			services.AddSingleton<IChordHandler, ChordTransposer>();
 			services.AddSingleton<LyricExtractionController>();
 			
 			services.AddScoped<SdaHymnalUI>();			

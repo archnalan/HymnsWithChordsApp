@@ -14,7 +14,7 @@ namespace HymnsWithChords.Controllers
             _lyricHandler = lyricHandler;
 			_validator= new TextFileValidationAttribute(".txt", ".doc", ".docx", ".pdf");
 		}
-        public async Task<List<string>> GetLyricsAsync( string filePath)
+        public async Task<List<string>> GetLyricsAsync(string filePath)
 		{
 			if (filePath == null) 
 				throw new InvalidOperationException("Valid file name is required.");
