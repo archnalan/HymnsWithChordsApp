@@ -9,7 +9,7 @@ namespace HymnsWithChords.Data
 		public HymnDbContext(DbContextOptions<HymnDbContext> options)
 			: base(options)
 		{
-		}
+		}		
         public DbSet<Hymn> Hymns { get; set; }
         public DbSet<Category> Categories { get; set; }
 		public DbSet<Verse> Verses { get; set; }
@@ -18,6 +18,7 @@ namespace HymnsWithChords.Data
         public DbSet<LyricSegment> LyricSegments{ get; set; }
 		public DbSet<Chord> Chords { get; set; }
 		public DbSet<UserFeedback> UserFeedback { get; set; }
+		public DbSet<Page> Pages { get; set; }
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);

@@ -16,6 +16,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 	.AddEntityFrameworkStores<HymnDbContext>();
 builder.Services.AddControllersWithViews();
 
+//Register Automapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddLogging();
 //builder.Services.AddScoped<TextFileUploadService>();
 
@@ -29,7 +32,7 @@ using (var scope = app.Services.CreateScope())
 	try
 	{
 		var context = services.GetRequiredService<HymnDbContext>();
-		context.Database.EnsureCreated();
+		context.Database.Migrate(); //Ensures migrations are applied
 		CategoryData.Initialize(services);
 	}
 	catch(Exception ex)

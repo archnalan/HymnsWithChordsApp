@@ -8,10 +8,11 @@ namespace HymnsWithChords.Areas.Admin.ViewModels
 {
 	public class HymnViewModel
 	{
-		[Required]
-		[Display(Name = "SDAH-")]
+		[Required]		
 		public int Number { get; set; }
 
+		[Display(Name = "SDAH-")]
+		public string DisplayHymn => $"SDAH-{Number}";
 		[Required]
 		[StringLength(100)]
 		public string Title { get; set; }		

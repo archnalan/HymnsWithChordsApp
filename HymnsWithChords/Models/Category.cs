@@ -14,6 +14,11 @@ namespace HymnsWithChords.Models
 
 		public int? ParentCategoryId { get; set; }//Nullable Main Category
 
+		public int? Sorting {  get; set; } //CategoryOrder
+
+		[StringLength(255)]
+		public string? CategorySlug { get; set; }
+
 		[ForeignKey(nameof(ParentCategoryId))]
 		public virtual Category ParentCategory { get; set; }
 
