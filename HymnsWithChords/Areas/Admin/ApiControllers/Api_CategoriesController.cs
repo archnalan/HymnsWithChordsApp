@@ -6,7 +6,9 @@ using LanguageExt.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Plugins;
 using System.Linq;
+using System.Web.Http.ModelBinding;
 
 namespace HymnsWithChords.Areas.Admin.ApiControllers
 {
@@ -73,7 +75,6 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 				return Ok(new {
 					 Found = categoryDtos,
 					 NotFound = notFoundIds
-
 				});
 			}
 			return Ok(categoryDtos);
@@ -107,34 +108,72 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			return CreatedAtAction(nameof(GetCategoryByID), new { id = category.Id}, newCategory);
 		}
 
-		//POST admin/api_categories/create-many
+		//POST admin/api_categories/create_many
 		[HttpPost]
-		[Route("create-many")]
+		[Route("create_many")]
 		public async Task<IActionResult> CreateMany([FromBody]CategoryDto[] categoryDtos)
 		{
 			if (categoryDtos == null || categoryDtos.Length == 0) 
 				return BadRequest("Category Data is required");
 
+			var categoriesToAdd = new List<Category>();
+			var createdCategories = new List<CategoryDto>();
+			 
+			var errors = new List<string>();
+
 			foreach(var categoryDto in categoryDtos)
 			{
-				if (!ModelState.IsValid) return BadRequest(ModelState);
-
-				var slugExists = await _context.Categories
-					.AnyAsync(c => c.CategorySlug == categoryDto.CategorySlug);
-
-				if (slugExists) return Conflict($"Category: {categoryDto.Name} Already Exists.");
+				if (!TryValidateModel(categoryDto))
+				{
+					errors.Add($"Invalid data for category: {categoryDto.Name}");
+					continue;
+				}				
 
 				categoryDto.CategorySlug = categoryDto.Name.ToLower().Replace(" ", "-");
 				categoryDto.Sorting = 100;
 
+				var slugExists = await _context.Categories
+					.AnyAsync(c => c.CategorySlug == categoryDto.CategorySlug);
+
+				if (slugExists)
+				{
+					errors.Add($"Category: {categoryDto.Name} Already Exists.");
+					continue;
+				}
+
 				var category = _mapper.Map<CategoryDto, Category>(categoryDto);
 
 				await _context.Categories.AddAsync(category);
+
+				categoriesToAdd.Add(category);//store results for later after saving				
+			}
+			try			
+			{				
+				await _context.SaveChangesAsync();
+				
+				foreach(var category in categoriesToAdd)
+				{
+					var newCategoryDto = _mapper.Map<Category, CategoryDto>(category);
+					
+					createdCategories.Add(newCategoryDto);//these will have have correct Ids 
+				}
+			}
+			catch (Exception ex)
+			{				
+				errors.Add($"{ex.Message}");
 			}
 
-			await _context.SaveChangesAsync();			
+			if (errors.Any())
+			{
+				return Ok(new 
+				{ 
+					Created = createdCategories,
+					Errors = errors
+				});
+				
+			}
 
-			return Ok("Categories created successfully");
+			return Ok(createdCategories);
 		}
 
 		//PUT admin/api_categories/edit_many
@@ -256,6 +295,15 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 				await _context.SaveChangesAsync();
 			}
+			catch(DbUpdateException ex)
+			{
+				if(ex.InnerException is 
+					Microsoft.Data.SqlClient.SqlException sqlEx 
+					&& sqlEx.Number ==547)
+					return BadRequest(sqlEx.Message);
+
+				return BadRequest($"An Error occured on attempt to delete category: {ex.Message}");
+			}
 			catch(Exception ex)
 			{
 				return BadRequest($"An Error occured on attempt to delete category: {ex.Message}");
@@ -265,8 +313,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		}
 
 		//POST admin/api_categories/re-assign
-		//method that takes an array of categoryIds and assigns it to a new category Id
-		
+		//method that takes an array of categoryIds and assigns it to a new category Id	
 
     }
 }
