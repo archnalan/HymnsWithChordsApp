@@ -2,6 +2,7 @@
 using HymnsWithChords.Data;
 using HymnsWithChords.Dtos;
 using HymnsWithChords.Models;
+using LanguageExt.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +39,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		//GET admin/api_categories/{id}
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetCategoryByID(int id)
-		{
+		{			
 			var category = await _context.Categories.FindAsync(id);
 
 			if (category == null) return BadRequest($"Category of ID: {id} does not exist");
@@ -46,6 +47,36 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var categoryDto = _mapper.Map<Category, CategoryDto>(category);
 
 			return Ok(categoryDto);
+		}
+
+		//GET admin/api_categories/by_ids
+		[HttpGet("by_ids")]
+		public async Task<IActionResult> GetCategoriesByID(int[] ids)
+		{
+			//Find match in Db
+			var categories = await _context.Categories
+								.Where(c => ids.Contains(c.Id))
+								.ToListAsync();
+
+			//var categoryDto = categories.Select(_mapper.Map<Category, CategoryDto>);
+
+			var categoryDtos = _mapper.Map<List<CategoryDto>>(categories);
+
+			var foundIds = categories.Select(c => c.Id).ToList();
+			var notFoundIds = ids.Except(foundIds).ToList();
+
+			if (notFoundIds.Count == ids.Length)
+				return NotFound(new { NotFound = notFoundIds });
+
+			if (notFoundIds.Any())
+			{
+				return Ok(new {
+					 Found = categoryDtos,
+					 NotFound = notFoundIds
+
+				});
+			}
+			return Ok(categoryDtos);
 		}
 
 		//POST admin/api_categories/create
@@ -58,13 +89,13 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
+			categoryDto.CategorySlug = categoryDto.Name.ToLower().Replace(" ", "-");
+			categoryDto.Sorting = 100;
+
 			var slugExists = await _context.Categories
 				.AnyAsync(c => c.CategorySlug == categoryDto.CategorySlug);
 
 			if (slugExists) return Conflict("Category Already Exists.");
-
-			categoryDto.CategorySlug = categoryDto.Name.ToLower().Replace(" ", "-");
-			categoryDto.Sorting = 100;
 
 			var category = _mapper.Map<CategoryDto, Category>(categoryDto);
 
@@ -106,6 +137,54 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			return Ok("Categories created successfully");
 		}
 
+		//PUT admin/api_categories/edit_many
+		[HttpPut]
+		[Route("edit_many")]
+		public async Task<IActionResult> EditMany(CategoryDto[] categoryDtos)
+		{
+			if (categoryDtos == null || categoryDtos.Length == 0)
+				return BadRequest("Category Data is required");
+
+			var updatedCategories = new List<CategoryDto>();
+			var notFoundResult = new List<string>();
+			var conflictResult = new List<string>();
+
+			foreach (var categoryDto in categoryDtos)
+			{
+				var editResult= await EditCategory(categoryDto.Id, categoryDto);//Edit happens in here
+
+				if (editResult is NotFoundObjectResult)				
+								notFoundResult.Add($"Category with ID: {categoryDto.Id} does not exist.");
+				
+				if(editResult is ConflictObjectResult)				
+								conflictResult.Add($"Category: {categoryDto.Name} Already Exists.");
+				
+				//if(editResult is CategoryDto updatedCategoryDto)		//Won't succed coz (editResult is Ok here)
+				//			updatedCategories.Add(updatedCategoryDto);
+
+				if(editResult is OkObjectResult Okresult && Okresult.Value is CategoryDto updatedCatDto)
+					updatedCategories.Add(updatedCatDto);			
+
+			}
+
+			await _context.SaveChangesAsync();
+
+			//crafting response
+			var response = new
+			{
+				Updated = updatedCategories,
+				NotFound = notFoundResult,
+				Conflict = conflictResult
+			};
+
+			if (notFoundResult.Any() || conflictResult.Any())
+			{
+				return BadRequest(response);
+			}
+
+			return Ok(response.Updated);
+		}
+
 		//PUT admin/api_categories/edit
 		[HttpPut("{id}")]
 		[Route("edit/{id}")]
@@ -113,11 +192,27 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		{
 			if (categoryDto == null) return BadRequest("Category Data is required");
 
-			if(!ModelState.IsValid) return BadRequest(ModelState);			
+			var editResult = await EditCategory(id, categoryDto); //Edit happens in here
+
+			if (editResult == null) return BadRequest("Catagery Data could not be processed.");
+
+			//Waits to implement logic for unnecessary updates
+			//if (editResult is OkObjectResult okObject) return Ok(okObject.Value);
+
+			if (editResult is IActionResult result) return Ok(result);		
+
+			return StatusCode(StatusCodes.Status500InternalServerError,"An Unexpected Error Occured.");
+		}
+
+		public async Task<IActionResult> EditCategory(int id, CategoryDto categoryDto)
+		{
+			if (categoryDto == null) return BadRequest("Category Data is required");
+
+			if (!ModelState.IsValid) return BadRequest(ModelState);
 
 			var categoryInDb = await _context.Categories.FindAsync(id);
 
-			if(categoryInDb == null) 
+			if (categoryInDb == null)
 				return NotFound($"The category with ID: {id} does not exist.");
 
 			categoryDto.CategorySlug = categoryDto.Name.ToLower().Replace(" ", "-");
@@ -129,72 +224,23 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			if (slugExists) return Conflict("Category Already Exists.");
 
-			var category =_mapper.Map(categoryDto, categoryInDb);
+			//To avoid uneccessary Update
+
+			/*if (categoryInDb.Name == categoryDto.Name &&
+			   categoryInDb.CategorySlug == categoryDto.CategorySlug &&
+			   categoryInDb.Sorting == categoryDto.Sorting)
+							return Ok(new { Message = $"Category: {categoryDto.Name} is up to date", 
+										  Category = categoryDto });*/  
+
+			var category = _mapper.Map(categoryDto, categoryInDb);
 
 			_context.Categories.Update(category);
-
-			await _context.SaveChangesAsync();
 
 			var updatedCategoryDto = _mapper.Map<Category, CategoryDto>(categoryInDb);
 
 			return Ok(updatedCategoryDto);
 		}
-
-		//PUT admin/api_categories/edit-many
-		[HttpPut]
-		[Route("edit-many")]
-		public async Task<IActionResult> Edit(CategoryDto[] categoryDtos)
-		{
-			if (categoryDtos == null|| categoryDtos.Length == 0) 
-				return BadRequest("Category Data is required");
-
-			var updatedCategories = new List<CategoryDto>();
-			var notFoundResult = new List<string>();
-			var conflictResult = new List<string>();
-
-			foreach(var categoryDto in categoryDtos)
-			{
-				if (!ModelState.IsValid) return BadRequest(ModelState);
-
-				var categoryInDb = await _context.Categories.FindAsync(categoryDto.Id);
-
-				if (categoryInDb == null) 
-				{
-					notFoundResult.Add($"{categoryDto.Name} does not exist");
-					continue;				
-				} 
-
-				categoryDto.CategorySlug = categoryDto.Name.ToLower().Replace(" ", "-");
-				categoryDto.Sorting = 100;
-
-				var slugExists = await _context.Categories
-					.Where(s => s.Id != categoryDto.Id) // because the database already has slug for this model
-					.AnyAsync(c => c.CategorySlug == categoryDto.CategorySlug);
-
-				if (slugExists) 
-				{
-					conflictResult.Add($"Category: {categoryDto.Name} Already Exists.");
-					continue;
-				} 
-
-				var category = _mapper.Map(categoryDto, categoryInDb);
-
-				_context.Categories.Update(category);
-
-				updatedCategories.Add(categoryDto);				
-
-			}			
-
-			await _context.SaveChangesAsync();	
-			
-			if(notFoundResult.Any() || conflictResult.Any())
-			{
-				return BadRequest( new { NotFound = notFoundResult, 
-										Conflict = conflictResult });
-			}
-
-			return Ok(updatedCategories);
-		}
+		
 
 		//DELETE admin/api_categories/{id}
 		[HttpDelete("{id}")]
