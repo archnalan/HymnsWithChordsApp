@@ -21,6 +21,6 @@ namespace HymnsWithChords.Models
 		public string? ChordChartFilePath { get; set; }
 
 		public virtual ICollection<LyricSegment> LyricSegments { get; set; }
-
 	}
+	
 }

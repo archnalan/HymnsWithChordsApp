@@ -225,7 +225,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		}
 
 		//PUT admin/api_categories/edit
-		[HttpPut("{id}")]
+		[HttpPut]
 		[Route("edit/{id}")]
 		public async Task<IActionResult> Edit(int id, CategoryDto categoryDto)
 		{
@@ -274,6 +274,8 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var category = _mapper.Map(categoryDto, categoryInDb);
 
 			_context.Categories.Update(category);
+
+			await _context.SaveChangesAsync();
 
 			var updatedCategoryDto = _mapper.Map<Category, CategoryDto>(categoryInDb);
 
