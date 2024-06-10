@@ -4,6 +4,7 @@ using HymnsWithChords.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HymnsWithChords.Data.Migrations
 {
     [DbContext(typeof(HymnDbContext))]
-    partial class HymnDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240610113416_HymnBook-ChartModels")]
+    partial class HymnBookChartModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,9 +131,6 @@ namespace HymnsWithChords.Data.Migrations
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FretPosition")
-                        .HasColumnType("int");
 
                     b.Property<string>("PositionDescription")
                         .HasMaxLength(100)
@@ -626,7 +626,7 @@ namespace HymnsWithChords.Data.Migrations
             modelBuilder.Entity("HymnsWithChords.Models.ChordChart", b =>
                 {
                     b.HasOne("HymnsWithChords.Models.Chord", "Chord")
-                        .WithMany("ChordCharts")
+                        .WithMany("ChordsCharts")
                         .HasForeignKey("ChordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -784,7 +784,7 @@ namespace HymnsWithChords.Data.Migrations
 
             modelBuilder.Entity("HymnsWithChords.Models.Chord", b =>
                 {
-                    b.Navigation("ChordCharts");
+                    b.Navigation("ChordsCharts");
 
                     b.Navigation("LyricSegments");
                 });

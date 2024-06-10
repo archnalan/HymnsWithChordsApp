@@ -12,13 +12,19 @@ namespace HymnsWithChords.Models
 		[RegularExpression(@"^([A-G])(#|b|##|bb)?(\d+|m|maj|min|sus|aug|dim|add)?(/A-G?)?$",
 			ErrorMessage = "Invalid Chord Format!")]
 		public string ChordName { get; set; }
-		public ChordDifficulty Difficulty { get; set; } = ChordDifficulty.Easy;
 
-		[NotMapped]
-		public IFormFile ChordChart { get; set; }
+		[Range(1, 3)]
+		public ChordDifficulty Difficulty { get; set; } 
+		
+		//Points to the default ChordChart in the collection
+		public int? ChordChartId { get; set; }
 
+		//Will be assigned path of guitar chord position 1
 		[StringLength(255)]
-		public string? ChordChartFilePath { get; set; }
+		public string? ChordAudioFilePath { get; set; }
+
+		[ForeignKey(nameof(ChordChartId))]
+		public virtual ICollection<ChordChart> ChordCharts { get; set; }
 
 		public virtual ICollection<LyricSegment> LyricSegments { get; set; }
 	}

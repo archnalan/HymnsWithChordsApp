@@ -10,7 +10,11 @@ namespace HymnsWithChords.Profiles
         {
             CreateMap<Category, CategoryDto>().ReverseMap();
             CreateMap<Page, PageDto>().ReverseMap();
-            CreateMap<Chord, ChordDto>().ReverseMap();
+            CreateMap<Chord, ChordEditDto>().ReverseMap();
+			CreateMap<Chord, ChordCreateDto>().ReverseMap();
+			CreateMap<LyricSegment,LyricSegmentDto>().ReverseMap();
+            CreateMap<ChordChart, ChordChartCreateDto>().ReverseMap();
+            CreateMap<ChordChart, ChordChartEditDto>().ReverseMap();
         }
     }
 }

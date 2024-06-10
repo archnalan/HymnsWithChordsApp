@@ -21,6 +21,10 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddLogging();
 //builder.Services.AddScoped<TextFileUploadService>();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+	options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 
 var app = builder.Build();
 

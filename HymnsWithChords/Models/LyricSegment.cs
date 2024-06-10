@@ -21,25 +21,16 @@ namespace HymnsWithChords.Models
 
 		[StringLength(255)]
 		public string? LyricFilePath { get; set; }
-
-		//Navigation prop for verse,chorus and bridge and chord
-		public int? VerseId { get; set; }
-        public int? ChorusId { get; set; }
-        public int? BridgeId { get; set; }
+		
 		public int? ChordId { get; set; }
 
+		public int? LiricLineId{ get;  set; }		
 
-		[ForeignKey(nameof(VerseId))]
-        public virtual Verse Verse { get; set; }
-		
-		[ForeignKey(nameof(ChorusId))]
-        public virtual Chorus Chorus { get; set; }
-		
-		[ForeignKey(nameof(BridgeId))]
-		public virtual Bridge Bridge { get; set; }
 
 		[ForeignKey(nameof(ChordId))]
 		public virtual Chord Chord { get; set; }
 
+		[ForeignKey(nameof(LiricLineId))]
+		public virtual LyricLine LyricLine { get; set; }
 	}
 }

@@ -19,8 +19,13 @@ namespace HymnsWithChords.Models
 		[StringLength(255)]
 		public string? CategorySlug { get; set; }
 
+		public int? HymnBookId { get; set; }
+
 		[ForeignKey(nameof(ParentCategoryId))]
 		public virtual Category ParentCategory { get; set; }
+
+		[ForeignKey(nameof(HymnBookId))]
+		public virtual HymnBook HymnBook { get; set; }
 
 		public ICollection<Category> SubCategories { get; set; }
         public virtual ICollection<Hymn> Hymns { get; set; }

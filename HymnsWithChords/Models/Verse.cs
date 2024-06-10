@@ -16,6 +16,6 @@ namespace HymnsWithChords.Models
 		[ForeignKey(nameof(HymnId))]
 		public virtual Hymn Hymn { get; set; }
 
-		public virtual ICollection<LyricSegment> LyricSegments { get; set; }
+		public virtual ICollection<LyricLine> LyricLines { get; set; }
 	}
 }

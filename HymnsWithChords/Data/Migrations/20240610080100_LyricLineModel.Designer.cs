@@ -4,6 +4,7 @@ using HymnsWithChords.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HymnsWithChords.Data.Migrations
 {
     [DbContext(typeof(HymnDbContext))]
-    partial class HymnDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240610080100_LyricLineModel")]
+    partial class LyricLineModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,9 +59,6 @@ namespace HymnsWithChords.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int?>("HymnBookId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -71,8 +71,6 @@ namespace HymnsWithChords.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("HymnBookId");
 
                     b.HasIndex("ParentCategoryId");
 
@@ -87,12 +85,9 @@ namespace HymnsWithChords.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ChordAudioFilePath")
+                    b.Property<string>("ChordChartFilePath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<int?>("ChordChartId")
-                        .HasColumnType("int");
 
                     b.Property<string>("ChordName")
                         .IsRequired()
@@ -102,45 +97,13 @@ namespace HymnsWithChords.Data.Migrations
                     b.Property<int>("Difficulty")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("Chords");
-                });
-
-            modelBuilder.Entity("HymnsWithChords.Models.ChordChart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChartAudioFilePath")
+                    b.Property<string>("audioFilePath")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("ChordChartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChordId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FretPosition")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PositionDescription")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ChordId");
-
-                    b.ToTable("ChordsCharts");
+                    b.ToTable("Chords");
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>
@@ -213,33 +176,6 @@ namespace HymnsWithChords.Data.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Hymns");
-                });
-
-            modelBuilder.Entity("HymnsWithChords.Models.HymnBook", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Author")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HymnBooks");
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.LyricLine", b =>
@@ -609,29 +545,11 @@ namespace HymnsWithChords.Data.Migrations
 
             modelBuilder.Entity("HymnsWithChords.Models.Category", b =>
                 {
-                    b.HasOne("HymnsWithChords.Models.HymnBook", "HymnBook")
-                        .WithMany("Categories")
-                        .HasForeignKey("HymnBookId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("HymnsWithChords.Models.Category", "ParentCategory")
                         .WithMany("SubCategories")
                         .HasForeignKey("ParentCategoryId");
 
-                    b.Navigation("HymnBook");
-
                     b.Navigation("ParentCategory");
-                });
-
-            modelBuilder.Entity("HymnsWithChords.Models.ChordChart", b =>
-                {
-                    b.HasOne("HymnsWithChords.Models.Chord", "Chord")
-                        .WithMany("ChordCharts")
-                        .HasForeignKey("ChordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chord");
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>
@@ -690,7 +608,7 @@ namespace HymnsWithChords.Data.Migrations
                     b.HasOne("HymnsWithChords.Models.LyricLine", "LyricLine")
                         .WithMany("LyricSegments")
                         .HasForeignKey("LiricLineId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Chord");
 
@@ -784,8 +702,6 @@ namespace HymnsWithChords.Data.Migrations
 
             modelBuilder.Entity("HymnsWithChords.Models.Chord", b =>
                 {
-                    b.Navigation("ChordCharts");
-
                     b.Navigation("LyricSegments");
                 });
 
@@ -803,11 +719,6 @@ namespace HymnsWithChords.Data.Migrations
                     b.Navigation("Feedback");
 
                     b.Navigation("Verses");
-                });
-
-            modelBuilder.Entity("HymnsWithChords.Models.HymnBook", b =>
-                {
-                    b.Navigation("Categories");
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.LyricLine", b =>
