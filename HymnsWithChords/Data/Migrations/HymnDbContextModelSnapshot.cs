@@ -91,9 +91,6 @@ namespace HymnsWithChords.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int?>("ChordChartId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ChordName")
                         .IsRequired()
                         .HasMaxLength(15)
@@ -119,10 +116,7 @@ namespace HymnsWithChords.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("ChordChartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChordId")
+                    b.Property<int?>("ChordId")
                         .HasColumnType("int");
 
                     b.Property<string>("FilePath")
@@ -140,7 +134,7 @@ namespace HymnsWithChords.Data.Migrations
 
                     b.HasIndex("ChordId");
 
-                    b.ToTable("ChordsCharts");
+                    b.ToTable("ChordCharts", (string)null);
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>
@@ -628,8 +622,7 @@ namespace HymnsWithChords.Data.Migrations
                     b.HasOne("HymnsWithChords.Models.Chord", "Chord")
                         .WithMany("ChordCharts")
                         .HasForeignKey("ChordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Chord");
                 });

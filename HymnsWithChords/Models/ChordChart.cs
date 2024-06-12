@@ -7,7 +7,7 @@ namespace HymnsWithChords.Models
 	{
         public int Id { get; set; }
         public string FilePath { get; set; }
-        public int ChordId { get; set; }
+        public int? ChordId { get; set; }
 
         [Range(1,24)]
         public int FretPosition { get; set; }

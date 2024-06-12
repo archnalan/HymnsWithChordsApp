@@ -5,7 +5,7 @@ namespace HymnsWithChords.Dtos
 	public class ChordChartCreateDto
 	{
 		public string FilePath { get; set; }
-		public int ChordId { get; set; }
+		public int? ChordId { get; set; }
 
 		[Range(1, 24)]
 		public int FretPosition { get; set; }

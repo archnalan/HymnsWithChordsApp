@@ -14,19 +14,23 @@ namespace HymnsWithChords.Models
 		public string ChordName { get; set; }
 
 		[Range(1, 3)]
-		public ChordDifficulty Difficulty { get; set; } 
-		
-		//Points to the default ChordChart in the collection
-		public int? ChordChartId { get; set; }
+		public ChordDifficulty Difficulty { get; set; } 			
 
 		//Will be assigned path of guitar chord position 1
 		[StringLength(255)]
 		public string? ChordAudioFilePath { get; set; }
 
-		[ForeignKey(nameof(ChordChartId))]
+		
 		public virtual ICollection<ChordChart> ChordCharts { get; set; }
 
 		public virtual ICollection<LyricSegment> LyricSegments { get; set; }
-	}
+
+        
+        public Chord()
+        {
+            ChordCharts = new HashSet<ChordChart>();
+			LyricSegments = new HashSet<LyricSegment>();
+        }
+    }
 	
 }

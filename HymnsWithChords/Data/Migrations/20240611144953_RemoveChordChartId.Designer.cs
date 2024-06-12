@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HymnsWithChords.Data.Migrations
 {
     [DbContext(typeof(HymnDbContext))]
-    [Migration("20240610113416_HymnBook-ChartModels")]
-    partial class HymnBookChartModels
+    [Migration("20240611144953_RemoveChordChartId")]
+    partial class RemoveChordChartId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,9 +94,6 @@ namespace HymnsWithChords.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int?>("ChordChartId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ChordName")
                         .IsRequired()
                         .HasMaxLength(15)
@@ -122,15 +119,15 @@ namespace HymnsWithChords.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("ChordChartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChordId")
+                    b.Property<int?>("ChordId")
                         .HasColumnType("int");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FretPosition")
+                        .HasColumnType("int");
 
                     b.Property<string>("PositionDescription")
                         .HasMaxLength(100)
@@ -140,7 +137,7 @@ namespace HymnsWithChords.Data.Migrations
 
                     b.HasIndex("ChordId");
 
-                    b.ToTable("ChordCharts");
+                    b.ToTable("ChordCharts", (string)null);
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>
@@ -628,8 +625,7 @@ namespace HymnsWithChords.Data.Migrations
                     b.HasOne("HymnsWithChords.Models.Chord", "Chord")
                         .WithMany("ChordCharts")
                         .HasForeignKey("ChordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Chord");
                 });

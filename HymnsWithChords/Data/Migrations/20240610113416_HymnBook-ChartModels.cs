@@ -36,7 +36,7 @@ namespace HymnsWithChords.Data.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "ChordsCharts",
+                name: "ChordCharts",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -80,7 +80,7 @@ namespace HymnsWithChords.Data.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChordsCharts_ChordId",
-                table: "ChordsCharts",
+                table: "ChordCharts",
                 column: "ChordId");
 
             migrationBuilder.AddForeignKey(
@@ -112,7 +112,7 @@ namespace HymnsWithChords.Data.Migrations
                 table: "LyricSegments");
 
             migrationBuilder.DropTable(
-                name: "ChordsCharts");
+                name: "ChordCharts");
 
             migrationBuilder.DropTable(
                 name: "HymnBooks");

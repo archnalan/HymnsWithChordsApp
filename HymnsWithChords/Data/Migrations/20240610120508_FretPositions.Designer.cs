@@ -143,7 +143,7 @@ namespace HymnsWithChords.Data.Migrations
 
                     b.HasIndex("ChordId");
 
-                    b.ToTable("ChordsCharts");
+                    b.ToTable("ChordCharts");
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>

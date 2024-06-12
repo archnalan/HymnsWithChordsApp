@@ -20,7 +20,7 @@ namespace HymnsWithChords.Data
 		public DbSet<LyricLine> LyricLines { get; set; }
 		public DbSet<LyricSegment> LyricSegments{ get; set; }
 		public DbSet<Chord> Chords { get; set; }
-		public DbSet<ChordChart> ChordsCharts { get; set; }
+		public DbSet<ChordChart> ChordCharts { get; set; }
 		public DbSet<UserFeedback> UserFeedback { get; set; }
 		public DbSet<Page> Pages { get; set; }
 
@@ -100,6 +100,8 @@ namespace HymnsWithChords.Data
 				.WithMany(hb=>hb.Categories)
 				.HasForeignKey(cat=>cat.HymnBookId)
 				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<ChordChart>().ToTable("ChordCharts");
 		}
 	}
 }

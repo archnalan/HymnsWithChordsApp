@@ -9,12 +9,28 @@ namespace HymnsWithChords.Profiles
         public MappingProfile()
         {
             CreateMap<Category, CategoryDto>().ReverseMap();
+
             CreateMap<Page, PageDto>().ReverseMap();
+
             CreateMap<Chord, ChordEditDto>().ReverseMap();
 			CreateMap<Chord, ChordCreateDto>().ReverseMap();
-			CreateMap<LyricSegment,LyricSegmentDto>().ReverseMap();
+
+			CreateMap<Chord, ChordWithChartsDto>()
+                .ForMember(dest=>dest.Charts, opt=>opt.MapFrom(src=>src.ChordCharts))
+                .ReverseMap();
+            CreateMap<Chord, ChordWithChartsCreateDto>()
+                .ForMember(dest=>dest.Charts, opt=>opt.MapFrom(src=>src.ChordCharts))
+				.ReverseMap();
+            CreateMap<Chord, ChordWithOneChartDto>()
+                .ForMember(dest=>dest.ChordChart, opt=>opt.MapFrom(src=>src.ChordCharts))                
+				.ReverseMap()
+                .ForMember(dest=>dest.ChordCharts, opt=>opt.Ignore());//necessary for chart from Chord
+
             CreateMap<ChordChart, ChordChartCreateDto>().ReverseMap();
             CreateMap<ChordChart, ChordChartEditDto>().ReverseMap();
+				
+
+			CreateMap<LyricSegment,LyricSegmentDto>().ReverseMap();            
         }
     }
 }

@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Drawing;
 using HymnsWithChords.Data;
 using HymnsWithChords.Dtos;
 using HymnsWithChords.Interfaces;
 using HymnsWithChords.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace HymnsWithChords.Areas.Admin.ApiControllers
 {
@@ -24,16 +27,35 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
         }
 
 		//GET admin/api_chords
+		[HttpGet]
 		public async Task<IActionResult> Index()
 		{
-			var chords = await _context.Chords.OrderBy(c=>c.ChordName).ToListAsync();
+			var chords = await _context.Chords
+								.OrderBy(c=>c.ChordName)								
+								.ToListAsync();
 
-			var chordsDto = chords.Select(_mapper.Map<Chord, ChordEditDto>).ToList();
+			//var chordsDto = chords.Select(_mapper.Map<Chord, ChordEditDto>).ToList();
+
+			var chordsDto = _mapper.Map<List<ChordEditDto>>(chords);
 
 			return Ok(chordsDto);
 		}
 
-		//GET admin/api_chrds/5
+		//GET admin/api_chords/chords
+		[HttpGet("chords")]
+		public async Task<IActionResult> Chords()
+		{
+			var chords = await _context.Chords
+								.OrderBy(c=>c.ChordName)
+								.Include(ch => ch.ChordCharts.OrderBy(cc=>cc.FretPosition))
+								.ToListAsync();
+
+			var chordsDto = _mapper.Map<List<ChordWithChartsDto>>(chords);
+
+			return Ok(chordsDto);
+		}
+
+		//GET admin/api_chords/5
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetChordById(int id)
 		{
@@ -46,6 +68,25 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			return Ok(chordDto);
 		}
 
+		//GET admin/api_chrds/chords/5
+		[HttpGet]
+		[Route("chords/{id}")]
+		public async Task<IActionResult> GetChordWithChartsById(int id)
+		{
+			var chord = await _context.Chords
+						.Include(ch=>ch.ChordCharts.OrderBy(cc=>cc.FretPosition))
+						.FirstOrDefaultAsync(ch=>ch.Id == id);		
+
+			if (chord == null) return NotFound($"Chord with ID: {id} does not exist.");
+
+			chord.ChordCharts = chord.ChordCharts.OrderBy(cc => cc.FretPosition).ToList();
+
+			var chordDto = _mapper.Map<Chord, ChordWithChartsDto>(chord);
+
+			return Ok(chordDto);
+		}
+
+		
 		//GET admin/api_chords/by_ids
 		[HttpGet("by_ids")]
 		public async Task<IActionResult> GetChordsById(int[] ids)
@@ -54,7 +95,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 				return BadRequest("Chord Ids are required.");
 
 			var chords = await _context.Chords
-								.Where(ch=>ids.Contains(ch.Id))
+								.Where(ch=>ids.Contains(ch.Id))								
 								.ToListAsync();
 
 			var chordsDto = _mapper.Map<List<ChordEditDto>>(chords);
@@ -63,6 +104,34 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var notFoundIds = ids.Except(foundIds).ToList();
 
 			if(notFoundIds.Count == ids.Length) return NotFound( new { NotFound = notFoundIds });
+
+			if (notFoundIds.Any())
+				return Ok(new {
+					Found = chordsDto,
+					NotFound = notFoundIds
+				});
+
+			return Ok(chordsDto);
+		}
+
+		//GET admin/api_chords/chords/by_ids
+		[HttpGet("chords/by_ids")]
+		public async Task<IActionResult> GetChordsWithChartsById(int[] ids)
+		{
+			if (ids == null || ids.Any() == false)
+				return BadRequest("Chord Ids are required.");
+
+			var chords = await _context.Chords
+								.Where(ch=>ids.Contains(ch.Id))
+								.Include(ch=>ch.ChordCharts.OrderBy(cc=>cc.FretPosition))
+								.ToListAsync();
+
+			var chordsDto = _mapper.Map<List<ChordWithChartsDto>>(chords);
+
+			var foundIds = chordsDto.Select(ch => ch.Id).ToList();
+			var notFoundIds = ids.Except(foundIds).ToList();			
+			
+			if(notFoundIds.Count == ids.Length) return NotFound( new { NotFound = notFoundIds });			
 
 			if (notFoundIds.Any())
 				return Ok(new {
@@ -85,16 +154,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var chordExists = await _context.Chords
 							.AnyAsync(ch => ch.ChordName == chordDto.ChordName);
 
-			if (chordExists) return Conflict($"Chord: {chordDto.ChordName} already exists.");
-
-			/*if (Enum.IsDefined(typeof(ChordDifficulty), chordDto.Difficulty))
-			{
-				chordDto.Difficulty = (ChordDifficulty)chordDto.Difficulty;
-			}
-			else
-			{
-				chordDto.Difficulty = ChordDifficulty.Easy;
-			}*/
+			if (chordExists) return Conflict($"Chord: {chordDto.ChordName} already exists.");			
 
 			var chord = _mapper.Map<ChordCreateDto, Chord>(chordDto);		
 
@@ -106,13 +166,179 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			catch (Exception ex)
 			{
 				return BadRequest(ex.Message);
-			}
-
-			
+			}			
 
 			var newChord = _mapper.Map<Chord, ChordCreateDto>(chord);
 
 			return CreatedAtAction(nameof(GetChordsById), new {id = chord.Id}, newChord);
+		}
+
+		//POST admin/api_chords/create_with_chart
+		[HttpPost]
+		[Route("create_with_chart")]
+		public async Task<IActionResult> CreateChordWithChart([FromBody] ChordWithOneChartDto WithOneChartDto)
+		{
+			if (WithOneChartDto == null) return BadRequest("Chord data is Required");
+
+			if (!ModelState.IsValid) return BadRequest(ModelState);
+
+			var chordExists = await _context.Chords
+							.AnyAsync(ch => ch.ChordName == WithOneChartDto.ChordName);
+
+			if (chordExists) return Conflict($"Chord: {WithOneChartDto.ChordName} already exists.");
+
+			if (WithOneChartDto.ChordChart == null)
+				return BadRequest($"Chart Data for chord: {WithOneChartDto.ChordName} is required.");
+
+
+			var WithOneChart = _mapper.Map<ChordWithOneChartDto, Chord>(WithOneChartDto);			
+
+			var chartDto = WithOneChartDto.ChordChart;
+
+			ChordChart chartToAdd = null;
+
+			if (chartDto != null)
+			{
+				if (!TryValidateModel(chartDto))
+				{
+					return BadRequest($"Invalid data for Chart: {chartDto.FilePath}");					
+				}
+
+				var chartExists = await _context.ChordCharts
+					.AnyAsync(ch => ch.FilePath == chartDto.FilePath);
+
+				if (chartExists)
+				{
+					return Conflict($"Chart: {chartDto.FilePath} already exists");					
+				}
+				var chart = _mapper.Map<ChordChartEditDto, ChordChart>(chartDto);
+
+				chartToAdd = chart;				
+			}
+
+			using (var transaction = await _context.Database.BeginTransactionAsync())
+			{
+				try
+				{
+					//Saving first Entity to generate Id
+					await _context.Chords.AddAsync(WithOneChart);
+
+					await _context.SaveChangesAsync();
+
+					if(chartToAdd != null)
+					{
+						chartToAdd.ChordId = WithOneChart.Id;
+
+						await _context.ChordCharts.AddAsync(chartToAdd);
+						await _context.SaveChangesAsync();
+					}
+
+					await transaction.CommitAsync();								
+				}
+				catch (Exception ex)
+				{
+					await transaction.RollbackAsync();
+					return BadRequest(ex.Message);
+				}
+			}
+			var newChordWithOneChart = _mapper.Map<Chord, ChordWithChartsDto>(WithOneChart);
+
+			return CreatedAtAction(nameof(GetChordWithChartsById), new { id = WithOneChart.Id }, newChordWithOneChart);
+		}
+
+		//POST admin/api_chords/create_with_charts
+		[HttpPost]
+		[Route("create_with_charts")]
+		public async Task<IActionResult> CreateChordWithCharts([FromBody]ChordWithChartsCreateDto chordWithChartsDto)
+		{
+			if (chordWithChartsDto == null) return BadRequest("Chord data is Required");
+
+			if (!ModelState.IsValid) return BadRequest(ModelState);
+
+			var chordExists = await _context.Chords
+							.AnyAsync(ch => ch.ChordName == chordWithChartsDto.ChordName);
+
+			if (chordExists) return Conflict($"Chord: {chordWithChartsDto.ChordName} already exists.");
+
+			var chordWithCharts = _mapper.Map<ChordWithChartsCreateDto, Chord>(chordWithChartsDto);
+
+			//Make sure that charts list is empty
+			chordWithCharts.ChordCharts = new List<ChordChart>();
+
+			//Adding Charts together with the chord
+			var chartsToAdd = new List<ChordChart>();
+			var createdChartDto = new List<ChordChartEditDto>();
+			var errors = new List<string>();
+
+			if (chordWithChartsDto.Charts != null && chordWithChartsDto.Charts.Any())
+			{
+
+				foreach (var chartDto in chordWithChartsDto.Charts)
+				{
+					if (!TryValidateModel(chartDto))
+					{
+						errors.Add($"Invalid data for Chart: {chartDto.FilePath}");
+						continue;
+					}
+
+					var chartExists = await _context.ChordCharts
+						.AnyAsync(ch => ch.FilePath == chartDto.FilePath);
+
+					if (chartExists)
+					{
+						errors.Add($"Chart: {chartDto.FilePath} already exists");
+						continue;
+					}
+					var chart = _mapper.Map<ChordChartCreateDto, ChordChart>(chartDto);					
+
+					chartsToAdd.Add(chart);
+				}
+			}
+
+			if (errors.Any()) return BadRequest(errors);
+
+			using (var transaction = await _context.Database.BeginTransactionAsync())
+			{
+				try
+				{
+					//Saving first Entity to generate Id
+					await _context.Chords.AddAsync(chordWithCharts);
+
+					await _context.SaveChangesAsync();
+					
+					
+					if (chartsToAdd.Count > 0)
+					{
+						//Assign the Id to relate charts with the chord.
+						foreach (var chart in chartsToAdd)
+						{
+							//Making charts children of the chord
+							chart.ChordId = chordWithCharts.Id;
+							
+						}				
+						await _context.ChordCharts.AddRangeAsync(chartsToAdd);
+						await _context.SaveChangesAsync();							 
+
+						createdChartDto = _mapper.Map<List<ChordChartEditDto>>(chartsToAdd);
+
+						if (createdChartDto.Any() == false)
+						{
+							return BadRequest("No chord charts were added.");
+						}
+					}
+
+					await transaction.CommitAsync();
+				}
+				catch (Exception ex)
+				{
+					await transaction.RollbackAsync();
+					return BadRequest(ex.Message);
+				}
+			}					
+
+			var newChordWithChats = _mapper.Map<Chord, ChordWithChartsDto>(chordWithCharts);
+		
+			return CreatedAtAction(nameof(GetChordsWithChartsById), new {id = chordWithCharts.Id}, newChordWithChats);
 		}
 
 		
@@ -171,9 +397,78 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 				{
 					errors.Add($"{ex.Message}");
 				}
+			}			
 
+			if(errors.Count == chordDtos.Count) return BadRequest(errors);
+
+			if (errors.Any())
+			{
+				return Ok(new
+				{
+					Created = createdChordsDto,
+					Errors = errors
+				});
 			}
-			
+
+			return Ok(createdChordsDto);
+		}
+
+		//POST admin/api_chords/create_many_with_charts
+		[HttpPost]
+		[Route("create_many_with_charts")]
+		public async Task<IActionResult> CreateChordsWithCharts(List<ChordWithChartsCreateDto> chordDtos)
+		{
+			if (chordDtos == null || chordDtos.Count == 0) 
+					return BadRequest("Chord Data is required.");
+
+			var chordsToAdd = new List<Chord>();
+			var createdChordsDto = new List<ChordWithChartsCreateDto>();
+
+			var errors = new List<string>();
+
+			foreach(var  chordDto in chordDtos)
+			{
+				if (!TryValidateModel(chordDto))
+				{
+					errors.Add($"Invalid data for Chord: {chordDto.ChordName}");
+					continue;
+				}
+
+				var chordExists = await _context.Chords
+								.AnyAsync(ch=>ch.ChordName == chordDto.ChordName);
+
+				if (chordExists)
+				{
+					errors.Add($"Chord: {chordDto.ChordName} already exists");
+					continue;
+				}
+
+				var chord = _mapper.Map<ChordWithChartsCreateDto, Chord>(chordDto);				
+
+				chordsToAdd.Add(chord);
+			}
+
+			if(chordsToAdd.Count > 0)
+			{
+				try
+				{
+					await _context.Chords.AddRangeAsync(chordsToAdd);
+
+					await _context.SaveChangesAsync();
+
+					foreach (var chord in chordsToAdd)
+					{
+						var newChordDto = _mapper.Map<Chord, ChordWithChartsCreateDto>(chord);
+						createdChordsDto.Add(newChordDto);
+					}
+
+				}
+				catch (Exception ex)
+				{
+					errors.Add($"{ex.Message}");
+				}
+
+			}		
 
 			if(errors.Count == chordDtos.Count) return BadRequest(errors);
 
@@ -198,9 +493,12 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
+			if (id != chordDto.Id) 
+				return Conflict($"Invalid attempt! Chord IDs: {id} and {chordDto.Id} are not the same.");
+
 			var chordInDb = await _context.Chords.FindAsync(id);
 
-			if(chordInDb == null) return BadRequest($"Chord with ID: {id} does not exist");
+			if(chordInDb == null) return BadRequest($"Chord with ID: {id} does not exist.");
 
 			var chordExits = await _context.Chords.Where(ch=>ch.Id != id)
 									.AnyAsync(ch=>ch.ChordName == chordDto.ChordName);
@@ -209,8 +507,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			if (chordInDb.ChordName == chordDto.ChordName &&
 			chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
-			chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath &&
-			chordInDb.ChordChartId == chordDto.ChordChartId)
+			chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath)
 				return Ok(new 
 				{ 
 					Message = $"Chord: {chordDto.ChordName} is already up-to-date"
@@ -223,6 +520,46 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			await _context.SaveChangesAsync();
 
 			var newchordDto = _mapper.Map<Chord, ChordEditDto>(chord);
+
+			return Ok(newchordDto);
+		}
+
+		//PUT admin/api_chords/edit_chord_with_charts/5
+		[HttpPut]
+		[Route("edit_chord_with_charts/{id}")]
+		public async Task<IActionResult> EditChordWithCharts(int id, ChordWithChartsDto chordDto)
+		{
+			if (chordDto == null) return BadRequest("Chord Data is required.");
+
+			if (!ModelState.IsValid) return BadRequest(ModelState);
+
+			if (id != chordDto.Id) 
+				return Conflict($"Invalid attempt! Chord IDs: {id} and {chordDto.Id} are not the same.");
+
+			var chordInDb = await _context.Chords.FindAsync(id);
+
+			if(chordInDb == null) return BadRequest($"Chord with ID: {id} does not exist.");
+
+			var chordExits = await _context.Chords.Where(ch=>ch.Id != id)
+									.AnyAsync(ch=>ch.ChordName == chordDto.ChordName);
+
+			if (chordExits) return Conflict($"Chord: {chordDto.ChordName} already exists.");
+
+			if (chordInDb.ChordName == chordDto.ChordName &&
+			chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
+			chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath	)
+				return Ok(new 
+				{ 
+					Message = $"Chord: {chordDto.ChordName} is already up-to-date"
+				});
+
+			var chord = _mapper.Map(chordDto, chordInDb);
+
+			_context.Chords.Update(chord);
+
+			await _context.SaveChangesAsync();
+
+			var newchordDto = _mapper.Map<Chord, ChordWithChartsDto>(chord);
 
 			return Ok(newchordDto);
 		}
@@ -266,7 +603,6 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 				if (chordInDb.ChordName == chordDto.ChordName &&
 					chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
-					chordInDb.ChordChartId == chordDto.ChordChartId &&
 					chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath)
 				{
 					errors.Add($"Chord: {chordDto.ChordName} already up-to-date.");
@@ -290,6 +626,87 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					editedChordsDto.Add(newChordDto);
 				}
 
+			}
+			catch (Exception ex)
+			{
+				errors.Add(ex.Message);
+			}
+
+			if(errors.Count == chordDtos.Count) return BadRequest(errors);
+
+			if (errors.Any())
+			{
+				return Ok(new 
+				{
+					Edited = editedChordsDto,
+					Errors = errors
+				});
+			}
+
+			return Ok(editedChordsDto);
+		}
+
+		//PUT admin/api_chords/edit_many_with_charts
+		[HttpPut]
+		[Route("edit_many_with_charts")]
+		public async Task<IActionResult> EditChordsWithCharts(List<ChordWithChartsDto> chordDtos)
+		{
+			if (chordDtos == null || chordDtos.Count == 0) return BadRequest("Chord data is required.");
+
+			var chordsToEdit = new List<Chord>();
+			var editedChordsDto = new List<ChordWithChartsDto>();
+
+			var errors = new List<string>();
+
+			foreach(var chordDto in chordDtos)
+			{
+				if (!TryValidateModel(chordDto))
+				{
+					errors.Add($"Invalid data for Chord: {chordDto.ChordName}");
+					continue;
+				}
+				var chordInDb = await _context.Chords.FindAsync(chordDto.Id);
+
+				if(chordInDb == null)
+				{
+					errors.Add($"Chord with ID: {chordDto.Id} does not exist");
+					continue;
+				}
+
+				var chordExists = await _context.Chords
+								.Where(ch => ch.Id != chordDto.Id)
+								.AnyAsync(ch => ch.ChordName == chordDto.ChordName);
+
+				if(chordExists) 
+				{
+					errors.Add($"Chord: {chordDto.ChordName} already exists.");
+					continue;
+				}
+
+				if (chordInDb.ChordName == chordDto.ChordName &&
+					chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&					
+					chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath)
+				{
+					errors.Add($"Chord: {chordDto.ChordName} already up-to-date.");
+					continue;
+				}
+
+				var chord = _mapper.Map(chordDto, chordInDb);
+
+				_context.Chords.Update(chord);
+
+				chordsToEdit.Add(chord);
+			}
+
+			try
+			{
+				await _context.SaveChangesAsync();
+
+				foreach(var chord in chordsToEdit) 
+				{
+					var newChordDto = _mapper.Map<Chord, ChordWithChartsDto>(chord);
+					editedChordsDto.Add(newChordDto);
+				}
 			}
 			catch (Exception ex)
 			{

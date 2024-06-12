@@ -9,8 +9,7 @@ namespace HymnsWithChords.Dtos
         public string ChordName { get; set; }
 
 		[Range(1, 3)]
-		public ChordDifficulty Difficulty { get; set; }		
-		public int? ChordChartId { get; set; }
+		public ChordDifficulty Difficulty { get; set; }			
 		public string? ChordAudioFilePath { get; set; }
 
 	}

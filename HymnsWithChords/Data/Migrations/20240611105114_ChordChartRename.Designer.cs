@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HymnsWithChords.Data.Migrations
 {
     [DbContext(typeof(HymnDbContext))]
-    [Migration("20240610113416_HymnBook-ChartModels")]
-    partial class HymnBookChartModels
+    [Migration("20240611105114_ChordChartRename")]
+    partial class ChordChartRename
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,6 +132,9 @@ namespace HymnsWithChords.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("FretPosition")
+                        .HasColumnType("int");
+
                     b.Property<string>("PositionDescription")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -140,7 +143,7 @@ namespace HymnsWithChords.Data.Migrations
 
                     b.HasIndex("ChordId");
 
-                    b.ToTable("ChordCharts");
+                    b.ToTable("ChordCharts", (string)null);
                 });
 
             modelBuilder.Entity("HymnsWithChords.Models.Chorus", b =>

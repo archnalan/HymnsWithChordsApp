@@ -5,25 +5,25 @@
 namespace HymnsWithChords.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class FretPositions : Migration
+    public partial class RemoveChordChartId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "FretPosition",
-                table: "ChordCharts",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.DropColumn(
+                name: "ChordChartId",
+                table: "Chords");            
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "FretPosition",
-                table: "ChordCharts");
+            migrationBuilder.AddColumn<int>(
+                name: "ChordChartId",
+                table: "Chords",
+                type: "int",
+                nullable: true);
+         
         }
     }
 }
