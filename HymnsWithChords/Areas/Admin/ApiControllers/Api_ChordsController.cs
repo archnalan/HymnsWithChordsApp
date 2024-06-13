@@ -49,7 +49,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 								.OrderBy(c=>c.ChordName)
 								.Include(ch => ch.ChordCharts.OrderBy(cc=>cc.FretPosition))
 								.ToListAsync();
-
+			
 			var chordsDto = _mapper.Map<List<ChordWithChartsDto>>(chords);
 
 			return Ok(chordsDto);
@@ -78,8 +78,6 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 						.FirstOrDefaultAsync(ch=>ch.Id == id);		
 
 			if (chord == null) return NotFound($"Chord with ID: {id} does not exist.");
-
-			chord.ChordCharts = chord.ChordCharts.OrderBy(cc => cc.FretPosition).ToList();
 
 			var chordDto = _mapper.Map<Chord, ChordWithChartsDto>(chord);
 
@@ -227,6 +225,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 					if(chartToAdd != null)
 					{
+						//Applying the generated Id
 						chartToAdd.ChordId = WithOneChart.Id;
 
 						await _context.ChordCharts.AddAsync(chartToAdd);
@@ -536,28 +535,86 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			if (id != chordDto.Id) 
 				return Conflict($"Invalid attempt! Chord IDs: {id} and {chordDto.Id} are not the same.");
 
-			var chordInDb = await _context.Chords.FindAsync(id);
+			var chordInDb = await _context.Chords								
+								.FirstOrDefaultAsync(c=>c.Id ==id);
 
 			if(chordInDb == null) return BadRequest($"Chord with ID: {id} does not exist.");
 
-			var chordExits = await _context.Chords.Where(ch=>ch.Id != id)
+			var chordExits = await _context.Chords.Where(ch=>ch.Id != id)									
 									.AnyAsync(ch=>ch.ChordName == chordDto.ChordName);
 
-			if (chordExits) return Conflict($"Chord: {chordDto.ChordName} already exists.");
+			if (chordExits) return Conflict($"Chord: {chordDto.ChordName} already exists.");	
 
-			if (chordInDb.ChordName == chordDto.ChordName &&
-			chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
-			chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath	)
-				return Ok(new 
-				{ 
-					Message = $"Chord: {chordDto.ChordName} is already up-to-date"
-				});
+
+			var chartsOfChordDto = chordDto.Charts;
+
+			if (chartsOfChordDto.Count > 0)
+			{
+				var errors = new List<string>();
+
+				foreach(var chart in chartsOfChordDto)
+				{
+					var chartFileInDb = await _context.ChordCharts 
+									.Where(ct=>ct.Id != chart.Id)
+									.AnyAsync(ch => ch.FilePath == chart.FilePath);
+
+					var chartAudioInDb = await _context.ChordCharts
+									.Where(ct => ct.Id != chart.Id)
+									.AnyAsync(ch => ch.ChartAudioFilePath == chart.ChartAudioFilePath);
+
+					if (chartFileInDb) 
+					{ 
+						errors.Add($"Chart: {chart.FilePath} already exists.");
+						continue;
+					}
+					if (chartAudioInDb)
+					{
+						errors.Add($"Chart audio: {chart.ChartAudioFilePath} already exists.");
+						continue;
+					}
+
+					if (chart.ChordId != id)
+					{
+						errors.Add($"Ivalid Attempt: {chart.FilePath} is linked with {chordDto.ChordName}.");
+
+						continue;
+					}
+				}				
+
+				if (errors.Any()) return BadRequest(errors);				
+				
+			}
 
 			var chord = _mapper.Map(chordDto, chordInDb);
 
+			/*// Update or add chord charts
+			var existingCharts = chordInDb.ChordCharts.ToList();
+
+			foreach (var chartDto in chartsOfChordDto)
+			{
+				var existingChart = existingCharts.FirstOrDefault(c => c.Id == chartDto.Id);
+				if (existingChart != null)
+				{
+					_mapper.Map(chartDto, existingChart);
+				}
+				else
+				{
+					var newChart = _mapper.Map<ChordChart>(chartDto);
+					chordInDb.ChordCharts.Add(newChart);
+				}
+			}*/
+
 			_context.Chords.Update(chord);
 
-			await _context.SaveChangesAsync();
+			try
+			{
+				await _context.SaveChangesAsync();
+			}
+			catch(Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+				
 
 			var newchordDto = _mapper.Map<Chord, ChordWithChartsDto>(chord);
 
@@ -683,13 +740,13 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					continue;
 				}
 
-				if (chordInDb.ChordName == chordDto.ChordName &&
-					chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&					
+				/*if (chordInDb.ChordName == chordDto.ChordName &&
+					chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
 					chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath)
 				{
 					errors.Add($"Chord: {chordDto.ChordName} already up-to-date.");
 					continue;
-				}
+				}*/
 
 				var chord = _mapper.Map(chordDto, chordInDb);
 

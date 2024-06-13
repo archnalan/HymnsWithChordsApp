@@ -9,8 +9,8 @@ namespace HymnsWithChords.Models
 		public int Id { get; set; }
 
 		[StringLength(15)]
-		[RegularExpression(@"^([A-G])(#|b|##|bb)?(\d+|m|maj|min|sus|aug|dim|add)?(/A-G?)?$",
-			ErrorMessage = "Invalid Chord Format!")]
+		[RegularExpression(@"^([A-G])(#|b|bb|##)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b|bb|##)?)?$",
+		ErrorMessage = "Invalid Chord Format!")]
 		public string ChordName { get; set; }
 
 		[Range(1, 3)]

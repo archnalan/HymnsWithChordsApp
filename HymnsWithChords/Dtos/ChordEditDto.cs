@@ -11,6 +11,5 @@ namespace HymnsWithChords.Dtos
 		[Range(1, 3)]
 		public ChordDifficulty Difficulty { get; set; }			
 		public string? ChordAudioFilePath { get; set; }
-
 	}
 }

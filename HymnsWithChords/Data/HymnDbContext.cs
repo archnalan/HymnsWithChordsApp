@@ -102,6 +102,10 @@ namespace HymnsWithChords.Data
 				.OnDelete(DeleteBehavior.Restrict);
 
 			builder.Entity<ChordChart>().ToTable("ChordCharts");
+
+			builder.Entity<Chord>()
+				.Property(c => c.Difficulty)
+				.HasConversion<string>();
 		}
 	}
 }

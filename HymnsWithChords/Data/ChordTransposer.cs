@@ -62,9 +62,12 @@ namespace HymnsWithChords.Data
 			chord = chord.Trim().Replace(" ", "");//Remove any spaces
 
 			var match = System.Text.RegularExpressions
-				.Regex.Match(chord, @"^([A-G])(#|b)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b)?)?$"
-);
-			if(!match.Success) return chord;
+				.Regex.Match(chord, @"^([A-G])(#|b)?(m|maj|min|sus|aug|dim|add)?(\d+)?(/([A-G])(#|b)?)?$");
+			
+			/*[RegularExpression(@"^([A-G])(b|#)?(m|maj|min|dim|aug|sus|add)?(2|4|5|6|7|9|11|13)?(#|b)?(\/[A-G](#|b)?)?$",
+			ErrorMessage = "Invalid Chord Format!")]*/
+
+			if (!match.Success) return chord;
 
 			var rootNote = match.Groups[1].Value + match.Groups[2].Value;
 			var chordQuality = match.Groups[3].Value + match.Groups[4];
