@@ -14,7 +14,6 @@ namespace HymnsWithChords.Dtos
 		//Navigation prop for verse,chorus and bridge and chord
 		public int? VerseId { get; set; }
 		public int? ChorusId { get; set; }
-		public int? BridgeId { get; set; }
-		public int? ChordId { get; set; }
+		public int? BridgeId { get; set; }		
 	}
 }

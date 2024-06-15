@@ -100,7 +100,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var foundChartsDto = _mapper.Map<List<ChordChartEditDto>>(chords)
 										.ToList();
 
-			var notFoundChartsDto = ids.Except(chords.Select(ch=>ch.Id)).ToList();
+			var notFoundChartsDto = ids.Except(foundChartsDto.Select(ch=>ch.Id)).ToList();
 
 			if(notFoundChartsDto.Count == ids.Count) return NotFound(notFoundChartsDto);
 

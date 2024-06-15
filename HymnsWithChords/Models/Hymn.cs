@@ -17,6 +17,10 @@ namespace HymnsWithChords.Models
 		[StringLength(100)]
 		public string Title { get; set; }
 
+		[Required]
+		[StringLength(200)]
+		public string Slug { get; set; }
+
 		[NotMapped]
 		[TextFileValidation(".txt", ".pdf")]
 		public IFormFile? TextUpload { get; set; }

@@ -8,6 +8,13 @@ namespace HymnsWithChords.Profiles
 	{
         public MappingProfile()
         {
+            CreateMap<HymnBook, HymnBookDto>().ReverseMap();
+            CreateMap<HymnBook, HymnBookCreateDto>().ReverseMap();
+            CreateMap<HymnBook, HymnBookWithCategoriesDto>().ReverseMap();
+
+            CreateMap<Hymn, HymnDto>().ReverseMap();
+            CreateMap<Hymn, HymnCreateDto>().ReverseMap();
+
             CreateMap<Category, CategoryDto>().ReverseMap();
 
             CreateMap<Page, PageDto>().ReverseMap();

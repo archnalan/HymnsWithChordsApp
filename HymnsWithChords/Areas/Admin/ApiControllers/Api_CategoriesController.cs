@@ -96,7 +96,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var slugExists = await _context.Categories
 				.AnyAsync(c => c.CategorySlug == categoryDto.CategorySlug);
 
-			if (slugExists) return Conflict("Category Already Exists.");
+			if (slugExists) return Conflict($"Category: {categoryDto.Name} already Exists.");
 
 			var category = _mapper.Map<CategoryDto, Category>(categoryDto);
 
