@@ -194,7 +194,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 				if (hymn == null)
 				{
-					errors.Add($"Chart with ID: {id} does not exist.");
+					errors.Add($"Hymn with ID: {id} does not exist.");
 					continue;
 				}
 				_context.Hymns.Remove(hymn);

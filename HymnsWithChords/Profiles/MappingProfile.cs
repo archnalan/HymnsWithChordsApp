@@ -15,6 +15,13 @@ namespace HymnsWithChords.Profiles
             CreateMap<Hymn, HymnDto>().ReverseMap();
             CreateMap<Hymn, HymnCreateDto>().ReverseMap();
 
+            CreateMap<Verse, VerseDto>()
+                .ForMember(dest=>dest.HymnId, opt=>opt.MapFrom(v=>v.HymnId))                
+                .ReverseMap()
+				.ForMember(dest => dest.LyricLines, opt=>opt.Ignore())
+                .ForMember(dest=>dest.Hymn, opt=>opt.Ignore());
+            CreateMap<Verse, VerseCreateDto>().ReverseMap();    
+
             CreateMap<Category, CategoryDto>().ReverseMap();
 
             CreateMap<Page, PageDto>().ReverseMap();

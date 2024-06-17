@@ -18,4 +18,5 @@ namespace HymnsWithChords.Models
 
 		public virtual ICollection<LyricLine> LyricLines { get; set; }
 	}
+
 }

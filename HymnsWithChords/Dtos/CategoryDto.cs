@@ -3,8 +3,7 @@
 namespace HymnsWithChords.Dtos
 {
 	public class CategoryDto
-	{
-		[Key]
+	{		
 		public int Id { get; set; }
 		[Required]
 		[StringLength(100)]

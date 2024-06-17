@@ -1,14 +1,17 @@
 ﻿using AutoMapper;
 using DocumentFormat.OpenXml.Drawing;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using HymnsWithChords.Data;
 using HymnsWithChords.Dtos;
 using HymnsWithChords.Interfaces;
 using HymnsWithChords.Models;
+using LanguageExt.ClassInstances.Const;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using System.Linq;
 
 namespace HymnsWithChords.Areas.Admin.ApiControllers
 {
@@ -268,6 +271,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var chartsToAdd = new List<ChordChart>();
 			var createdChartDto = new List<ChordChartEditDto>();
 			var errors = new List<string>();
+			var noRepeatCharts = new HashSet<(string FilePath, int? ChordID)>();
 
 			if (chordWithChartsDto.Charts != null && chordWithChartsDto.Charts.Any())
 			{
@@ -288,9 +292,17 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 						errors.Add($"Chart: {chartDto.FilePath} already exists");
 						continue;
 					}
+
+					var chartTuple = (chartDto.FilePath, chartDto.ChordId);
+					if (noRepeatCharts.Contains(chartTuple))
+					{
+						errors.Add($"Invalid! Duplicate Chart {chartDto.FilePath} detected for same chord.");
+						continue;
+					}
 					var chart = _mapper.Map<ChordChartCreateDto, ChordChart>(chartDto);					
 
 					chartsToAdd.Add(chart);
+					noRepeatCharts.Add(chartTuple);
 				}
 			}
 
@@ -354,8 +366,9 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var createdChordsDto = new List<ChordCreateDto>();
 
 			var errors = new List<string>();
+			var noRepeatChords = new HashSet<(string Name, ChordDifficulty Difficulty)>();
 
-			foreach(var  chordDto in chordDtos)
+			foreach (var  chordDto in chordDtos)
 			{
 				if (!TryValidateModel(chordDto))
 				{
@@ -371,10 +384,17 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					errors.Add($"Chord: {chordDto.ChordName} already exists");
 					continue;
 				}
+				var chordTupple = (chordDto.ChordName, chordDto.Difficulty);
+
+				if (noRepeatChords.Contains(chordTupple))
+				{
+					errors.Add($"Invalid! Duplicate {chordDto.ChordName} entries detected.");
+				}
 
 				var chord = _mapper.Map<ChordCreateDto, Chord>(chordDto);				
 
 				chordsToAdd.Add(chord);
+				noRepeatChords.Add(chordTupple);
 			}
 
 			if(chordsToAdd.Count > 0)
@@ -422,10 +442,12 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			var chordsToAdd = new List<Chord>();
 			var createdChordsDto = new List<ChordWithChartsCreateDto>();
-
+			
 			var errors = new List<string>();
+			var noRepeatChords = new HashSet<(string Name, ChordDifficulty difficulty)>();
+			var noRepeatCharts = new HashSet<(string FilePath, int? ChordId)>();
 
-			foreach(var  chordDto in chordDtos)
+			foreach (var  chordDto in chordDtos)
 			{
 				if (!TryValidateModel(chordDto))
 				{
@@ -442,9 +464,57 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					continue;
 				}
 
-				var chord = _mapper.Map<ChordWithChartsCreateDto, Chord>(chordDto);				
+				var chordTuple = (chordDto.ChordName, chordDto.Difficulty);
 
+				if (noRepeatChords.Contains(chordTuple))
+				{
+					errors.Add($"Invalid! Duplicate chord {chordDto.ChordName} detected with same difficulty level");
+					continue;
+				}
+				var chartDto = chordDto.Charts;
+
+				if (chartDto != null && chartDto.Any())
+				{
+					foreach (var chart in chartDto)
+					{
+						if (!TryValidateModel(chart))
+						{
+							errors.Add($"Invalid data for: {chart.FilePath}");
+							continue;
+						}
+
+						var chartExists = await _context.ChordCharts
+										.AnyAsync(ch => ch.FilePath == chart.FilePath);
+						if (chartExists)
+						{
+							errors.Add($"Chord chart: {chart.FilePath} already exists.");
+							continue;
+						}
+
+						if (chart.ChordId != null)
+						{
+							var chordForChartExists = await _context.Chords
+								.AnyAsync(ch => ch.Id == chart.ChordId);
+							if (chordForChartExists == false)
+							{
+								errors.Add($"Chord with ID: {chart.ChordId} does not exist.");
+								continue;
+							}
+						}
+
+						var chartTuple = (chart.FilePath, chart.ChordId);
+
+						if (noRepeatCharts.Contains(chartTuple))
+						{
+							errors.Add($"Invalid! Duplicate charts {chart.FilePath} in {chordDto.ChordName} detected.");
+							continue;
+						}
+						noRepeatCharts.Add(chartTuple);
+					}
+				}					
+				var chord = _mapper.Map<ChordWithChartsCreateDto, Chord>(chordDto);	
 				chordsToAdd.Add(chord);
+				noRepeatChords.Add(chordTuple);				
 			}
 
 			if(chordsToAdd.Count > 0)
@@ -551,6 +621,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			if (chartsOfChordDto.Count > 0)
 			{
 				var errors = new List<string>();
+				var noRepeats = new HashSet<(string FilePath, int? ChordId)>();
 
 				foreach(var chart in chartsOfChordDto)
 				{
@@ -579,6 +650,13 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 						continue;
 					}
+					var chartTuple = (chart.FilePath, chart.ChordId);
+					if (noRepeats.Contains(chartTuple))
+					{
+						errors.Add($"Invalid! Duplicate chart {chart.FilePath} detected for same chord.");
+						continue;
+					}
+					noRepeats.Add(chartTuple);
 				}				
 
 				if (errors.Any()) return BadRequest(errors);				
@@ -632,6 +710,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var editedChordsDto = new List<ChordEditDto>();
 
 			var errors = new List<string>();
+			var noReapeatChords = new HashSet<(string Name, ChordDifficulty Difficulty)>();
 
 			foreach(var chordDto in chordDtos)
 			{
@@ -666,11 +745,18 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					continue;
 				}
 
+				var chordTuple = (chordDto.ChordName, chordDto.Difficulty);
+				if (noReapeatChords.Contains(chordTuple))
+				{
+					errors.Add($"Invalid! Duplicate chord {chordDto.ChordName} detected with same difficulty level");
+					continue;
+				}
 				var chord = _mapper.Map(chordDto, chordInDb);
 
 				_context.Chords.Update(chord);
 
 				chordsToEdit.Add(chord);
+				noReapeatChords.Add(chordTuple);
 			}
 
 			try
@@ -714,6 +800,8 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var editedChordsDto = new List<ChordWithChartsDto>();
 
 			var errors = new List<string>();
+			var noRepeatChords = new HashSet<(string Name, ChordDifficulty Difficulty)>();
+			var noRepeatCharts = new HashSet<(string FilePath, int? ChordId)>();
 
 			foreach(var chordDto in chordDtos)
 			{
@@ -740,6 +828,13 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					continue;
 				}
 
+				var chordTuple = (chordDto.ChordName, chordDto.Difficulty);
+				if (noRepeatChords.Contains(chordTuple))
+				{
+					errors.Add($"Invalid! Duplicate chord {chordDto.ChordName} entries detected.");
+					continue;
+				}
+
 				/*if (chordInDb.ChordName == chordDto.ChordName &&
 					chordInDb.Difficulty == (ChordDifficulty)chordDto.Difficulty &&
 					chordInDb.ChordAudioFilePath == chordDto.ChordAudioFilePath)
@@ -747,12 +842,53 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					errors.Add($"Chord: {chordDto.ChordName} already up-to-date.");
 					continue;
 				}*/
+				var chartDto = chordDto.Charts;
+
+				if (chartDto != null && chartDto.Any())
+				{
+					foreach(var chart in chartDto)
+					{
+						if (!TryValidateModel(chart))
+						{
+							errors.Add($"Invalid data for: {chart.FilePath}");
+							continue;
+						}
+
+						var chartExists = await _context.ChordCharts
+										.AnyAsync(ch => ch.FilePath == chart.FilePath);
+						if (chartExists)
+						{
+							errors.Add($"Chord chart: {chart.FilePath} already exists.");
+							continue;
+						}
+
+						if (chart.ChordId != null)
+						{
+							var chordForChartExists = await _context.Chords
+								.AnyAsync(ch => ch.Id == chart.ChordId);
+							if (chordForChartExists == false)
+							{
+								errors.Add($"Chord with ID: {chart.ChordId} does not exist.");
+								continue;
+							}
+						}
+						var chartTuple = (chart.FilePath, chart.ChordId);
+						if (noRepeatCharts.Contains(chartTuple))
+						{
+							errors.Add($"Invalid! Duplicate charts {chart.FilePath} in {chordDto.ChordName} detected.");
+							continue;
+						}
+						noRepeatCharts.Add(chartTuple);
+					}
+					
+				}
 
 				var chord = _mapper.Map(chordDto, chordInDb);
 
 				_context.Chords.Update(chord);
 
 				chordsToEdit.Add(chord);
+				noRepeatChords.Add(chordTuple);
 			}
 
 			try

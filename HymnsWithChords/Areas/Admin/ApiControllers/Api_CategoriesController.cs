@@ -33,9 +33,9 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var categories = await _context.Categories
 									.OrderBy(c => c.Sorting)
 									.ToListAsync();
-			var categoryDto = categories.Select(_mapper.Map<Category, CategoryDto>).ToList();
+			var categoryDtos = categories.Select(_mapper.Map<Category, CategoryDto>).ToList();
 
-			return Ok(categoryDto);
+			return Ok(categoryDtos);
 		}
 
 		//GET admin/api_categories/{id}
@@ -120,6 +120,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var createdCategories = new List<CategoryDto>();
 			 
 			var errors = new List<string>();
+			var readyCategories = new HashSet<(string name, int? parentCategoryId)>();
 
 			foreach(var categoryDto in categoryDtos)
 			{
@@ -141,11 +142,18 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					continue;
 				}
 
+				if(readyCategories.Contains((categoryDto.Name, categoryDto.ParentCategoryId)))
+				{
+					errors.Add($"Invalid Attempt! Duplicate category:{categoryDto.Name} detected.");
+					continue;
+				}
+
 				var category = _mapper.Map<CategoryDto, Category>(categoryDto);
 
 				await _context.Categories.AddAsync(category);
 
 				categoriesToAdd.Add(category);//store results for later after saving				
+				readyCategories.Add((category.Name, category.ParentCategoryId));
 			}
 			try			
 			{				
