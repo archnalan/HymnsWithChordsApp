@@ -24,13 +24,12 @@ namespace HymnsWithChords.Models
 		
 		public int? ChordId { get; set; }
 
-		public int? LiricLineId{ get;  set; }		
-
+		public int? LyricLineId{ get;  set; }	
 
 		[ForeignKey(nameof(ChordId))]
 		public virtual Chord Chord { get; set; }
 
-		[ForeignKey(nameof(LiricLineId))]
+		[ForeignKey(nameof(LyricLineId))]
 		public virtual LyricLine LyricLine { get; set; }
 	}
 }

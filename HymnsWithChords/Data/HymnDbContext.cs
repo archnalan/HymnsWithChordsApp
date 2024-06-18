@@ -38,7 +38,7 @@ namespace HymnsWithChords.Data
 			builder.Entity<LyricSegment>()
 				.HasOne(seg=>seg.LyricLine)
 				.WithMany(line=>line.LyricSegments)
-				.HasForeignKey(seg=>seg.LiricLineId)
+				.HasForeignKey(seg=>seg.LyricLineId)
 				.OnDelete(DeleteBehavior.Cascade);
 
 			builder.Entity<LyricSegment>()

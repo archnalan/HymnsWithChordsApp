@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using HymnsWithChords.Dtos;
 using HymnsWithChords.Models;
+using HymnsWithChords.UI_Dtos;
 
 namespace HymnsWithChords.Profiles
 {
@@ -8,9 +9,13 @@ namespace HymnsWithChords.Profiles
 	{
         public MappingProfile()
         {
+            CreateMap<Page, PageDto>().ReverseMap();
+
             CreateMap<HymnBook, HymnBookDto>().ReverseMap();
             CreateMap<HymnBook, HymnBookCreateDto>().ReverseMap();
             CreateMap<HymnBook, HymnBookWithCategoriesDto>().ReverseMap();
+
+            CreateMap<Category, CategoryDto>().ReverseMap();
 
             CreateMap<Hymn, HymnDto>().ReverseMap();
             CreateMap<Hymn, HymnCreateDto>().ReverseMap();
@@ -20,11 +25,14 @@ namespace HymnsWithChords.Profiles
                 .ReverseMap()
 				.ForMember(dest => dest.LyricLines, opt=>opt.Ignore())
                 .ForMember(dest=>dest.Hymn, opt=>opt.Ignore());
-            CreateMap<Verse, VerseCreateDto>().ReverseMap();    
+            CreateMap<Verse, VerseCreateDto>().ReverseMap();
 
-            CreateMap<Category, CategoryDto>().ReverseMap();
+            CreateMap<LyricLine, LyricLineDto>().ReverseMap();
+            CreateMap<LyricLine, LyricLineCreateDto>().ReverseMap(); 
 
-            CreateMap<Page, PageDto>().ReverseMap();
+            CreateMap<LyricSegment, LyricSegmentDto>().ReverseMap();
+            CreateMap<LyricSegment, LyricSegmentCreateDto>().ReverseMap();
+            
 
             CreateMap<Chord, ChordEditDto>()                
                 .ReverseMap()
@@ -48,9 +56,15 @@ namespace HymnsWithChords.Profiles
             CreateMap<ChordChart, ChartWithParentChordDto>()
                 .ForMember(dest=>dest.ParentChord, opt=>opt.MapFrom(src=>src.Chord))
                 .ReverseMap();
-				
 
-			CreateMap<LyricSegment,LyricSegmentDto>().ReverseMap();            
+            ///////////////////////////////////////////////////////////////////////////////////////////
+
+            CreateMap<Hymn, HymnChordsUIDto>().ReverseMap();
+            CreateMap<Verse, VerseUIDto>().ReverseMap();
+            CreateMap<LyricLine, LyricLineUIDto>().ReverseMap();
+            CreateMap<LyricSegment, LyricSegmentUIDto>().ReverseMap();
+            CreateMap<Chord, ChordUIDto>().ReverseMap();
+            CreateMap<ChordChart, ChordChartUIDto>().ReverseMap();
         }
     }
 }
