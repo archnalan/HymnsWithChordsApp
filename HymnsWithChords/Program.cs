@@ -1,4 +1,6 @@
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using HymnsWithChords.Areas.Admin.Interfaces;
+using HymnsWithChords.Areas.Admin.LogicData;
 using HymnsWithChords.Data;
 using HymnsWithChords.Models;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +20,10 @@ builder.Services.AddControllersWithViews();
 
 //Register Automapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddHttpContextAccessor();
+
+// Register chart service
+builder.Services.AddScoped<IChordChartService, ChordChartService>();
 builder.Services.AddControllers()
 	.AddJsonOptions(options =>
 	{
@@ -30,6 +36,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
 	options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
+
+builder.Services.AddCors(options =>
+					options.AddPolicy("AllowAll", builder => 
+					builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 
@@ -62,6 +72,7 @@ using (var scope = app.Services.CreateScope())
 		app.UseHsts();
 	}
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

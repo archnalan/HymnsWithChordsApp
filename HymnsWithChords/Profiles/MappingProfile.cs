@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HymnsWithChords.Dtos;
+using HymnsWithChords.Dtos.WithUploads;
 using HymnsWithChords.Models;
 using HymnsWithChords.UI_Dtos;
 
@@ -56,6 +57,11 @@ namespace HymnsWithChords.Profiles
             CreateMap<ChordChart, ChartWithParentChordDto>()
                 .ForMember(dest=>dest.ParentChord, opt=>opt.MapFrom(src=>src.Chord))
                 .ReverseMap();
+
+            //WithUploads
+            CreateMap<ChordChart, ChartCreateDto>().ReverseMap();
+            CreateMap<ChordChart, ChartEditDto>().ReverseMap();
+            CreateMap<ChordChart, ChartWithUploadsDto>().ReverseMap();
 
             ///////////////////////////////////////////////////////////////////////////////////////////
 

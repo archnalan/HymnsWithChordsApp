@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HymnsWithChords.Data;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HymnsWithChords.Models
@@ -13,6 +14,7 @@ namespace HymnsWithChords.Models
         public int FretPosition { get; set; }
 
         [NotMapped]
+        [FileExtensionValidation(new string[] {".png, .jpg, .gif"})]
         public IFormFile ChartUpload { get; set; }
 
 		[StringLength(255)]
