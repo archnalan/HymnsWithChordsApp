@@ -21,21 +21,25 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		[HttpGet]
 		public async Task<IActionResult> Index()
 		{
-			var charts = await _chartService.GetAllChordChartsAsync();
+			var chartsResult = await _chartService.GetAllChordChartsAsync();
 
-			if (charts == null) return BadRequest("No Charts Added yet!");
+			if (!chartsResult.IsSuccess)
+				return StatusCode(chartsResult.StatusCode,
+					new { message = chartsResult.Error.Message });
 
-			return Ok(charts);
+			return Ok(chartsResult.Data);
 		}
 
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetChordChartById(int id)
 		{
-			var (chartDto, errorResult )= await _chartService.GetChordChartByIdAsync(id);
 
-			if (errorResult != null) return BadRequest(errorResult);
+			var chartResult = await _chartService.GetChordChartByIdAsync(id);
 
-			return Ok(chartDto);
+			if (!chartResult.IsSuccess)
+				return StatusCode(chartResult.StatusCode, new { message = chartResult.Error.Message });					
+
+			return Ok(chartResult.Data);
 		}
 
 		[HttpPost("create")]
@@ -45,25 +49,46 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);			
 
-			 var ( newChartDto, errorResults) = await _chartService.CreateChordChartAsync(chartCreateDto);
+			 var chartCreateResult = await _chartService.CreateChordChartAsync(chartCreateDto);
 
-			if (errorResults != null) return BadRequest(errorResults);
+			if (!chartCreateResult.IsSuccess) return StatusCode(chartCreateResult.StatusCode, 
+												new { message = chartCreateResult.Error.Message });
+
+			var newChartDto = chartCreateResult.Data;
 
 			return CreatedAtAction(nameof(GetChordChartById), new { id = newChartDto.Id}, newChartDto);
 		}
 
-		[HttpPut("edit")]
-		public async Task<IActionResult> EditChordChart([FromForm]ChartEditDto chartEditDto)
+		[HttpPut("edit/{id}")]
+		public async Task<IActionResult> EditChordChart(int id, [FromForm]ChartEditDto chartEditDto)
 		{
 			if (chartEditDto == null) return BadRequest("Chord Chart data is required.");
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
-			var (editedChartDto, errorResult) = await _chartService.EditChordChartAsync(chartEditDto);
+			if (id != chartEditDto.Id)
+				return BadRequest($"Chord charts of IDs: {id} and {chartEditDto.Id} are not the same");
 
-			if (errorResult != null) return BadRequest(errorResult);
+			var editedChartResult = await _chartService.EditChordChartAsync(chartEditDto);
 
-			return Ok(editedChartDto);
+			if (!editedChartResult.IsSuccess) return StatusCode(editedChartResult.StatusCode, new
+			{message = editedChartResult.Error.Message});
+
+			return Ok(editedChartResult);
+		}
+
+		[HttpDelete("{id}")]
+		public async Task<IActionResult> DeleteChordChart(int id)
+		{
+			var removalResult = await _chartService.DeleteChordChartByIdAsync(id);
+
+			if (!removalResult.IsSuccess)
+			{
+				return StatusCode(removalResult.StatusCode, 
+					new {message =  removalResult.Error.Message});
+			}
+
+			return NoContent();
 		}
 	}
 }

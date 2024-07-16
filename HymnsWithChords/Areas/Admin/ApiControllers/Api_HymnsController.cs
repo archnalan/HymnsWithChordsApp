@@ -35,10 +35,36 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			return Ok(hymnDtos);
 		}
 
+		[HttpGet("categories")]
+		public async Task<IActionResult> GetHymnsWithCategories()
+		{
+			var hymns = await _context.Hymns
+						.OrderBy(h => h.Number)
+						.Include(h=>h.Category)
+						.ToListAsync();		
+
+			var hymnDtos = _mapper.Map<List<HymnDto>>(hymns);
+
+			return Ok(hymnDtos);
+		}
+
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetHymnById(int id)
 		{
 			var hymn = await _context.Hymns.FindAsync(id);
+
+			if(hymn == null) return NotFound($"Hymn of ID:{id} does not exist.");
+
+			var hymnDto = _mapper.Map<HymnDto>(hymn);
+
+			return Ok(hymnDto);
+		}
+		[HttpGet("category/{id}")]
+		public async Task<IActionResult> GetHymnWithCategoryById(int id)
+		{
+			var hymn = await _context.Hymns
+							.Include(h=>h.Category)
+							.FirstOrDefaultAsync(h=>h.Id == id);
 
 			if(hymn == null) return NotFound($"Hymn of ID:{id} does not exist.");
 

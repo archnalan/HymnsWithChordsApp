@@ -24,7 +24,7 @@ namespace HymnsWithChords.Data
 				
 				if (isOkFileExtension == false)
 				{
-					return new ValidationResult($"This file extension is not valid.");
+					return new ValidationResult($"The {extension} file extension is not valid.");
 
 				}				
 			}			

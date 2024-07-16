@@ -16,10 +16,7 @@ namespace HymnsWithChords.Dtos
 		[StringLength(100)]
 		public string Title { get; set; }
 
-		public string? Slug { get; set; }
-
-		[StringLength(255)]
-		public string? TextFilePath { get; set; }
+		public string? Slug { get; set; }		
 
 		[StringLength(100)]
 		public string? WrittenDateRange { get; set; }
@@ -34,6 +31,8 @@ namespace HymnsWithChords.Dtos
 		public string AddedBy { get; set; }
 
 		public DateTime AddedDate { get; set; }
+		
+		public string? CategoryName { get; set; }
 		public int CategoryId { get; set; }
 	}
 }
