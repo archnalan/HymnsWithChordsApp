@@ -19,7 +19,7 @@ namespace HymnsWithChords.Dtos
 		[StringLength(255)]
 		public string Publisher { get; set; }
 
-		[Required]
+		
 		[DataType(DataType.Date)]
 		public DateTime? PublicationDate { get; set; }
 
@@ -39,8 +39,8 @@ namespace HymnsWithChords.Dtos
 
 		public string? AddedBy { get; set; }
 
-		[Required]
+		
 		[DataType(DataType.Date)]
-		public DateTime AddedTime { get; set; }
+		public DateTime? AddedTime { get; set; }
 	}
 }

@@ -29,7 +29,7 @@ namespace HymnsWithChords.Dtos
 					"One of VerseId, ChorusId, or BridgeId must be provided",
 					new[] { nameof(VerseId), nameof(BridgeId), nameof(ChorusId) });
 			}
-			if (noIdCount > 2)
+			if (noIdCount > 1)
 			{
 				yield return new ValidationResult(
 				   "Only one of VerseId, ChorusId, or BridgeId must be provided",
