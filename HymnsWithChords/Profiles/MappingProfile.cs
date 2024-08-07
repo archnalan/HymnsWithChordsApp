@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HymnsWithChords.Dtos;
+using HymnsWithChords.Dtos.CompositeDtos;
 using HymnsWithChords.Dtos.WithUploads;
 using HymnsWithChords.Models;
 using HymnsWithChords.UI_Dtos;
@@ -32,12 +33,12 @@ namespace HymnsWithChords.Profiles
             CreateMap<Verse, VerseCreateDto>().ReverseMap();
 
             CreateMap<LyricLine, LyricLineDto>().ReverseMap();
-            CreateMap<LyricLine, LyricLineCreateDto>().ReverseMap(); 
+            CreateMap<LyricLine, LyricLineCreateDto>().ReverseMap();
+            CreateMap<LyricLine, LineVerseCreateDto>().ReverseMap();
 
             CreateMap<LyricSegment, LyricSegmentDto>().ReverseMap();
             CreateMap<LyricSegment, LyricSegmentCreateDto>().ReverseMap();
             
-
             CreateMap<Chord, ChordEditDto>()                
                 .ReverseMap()
                 .ForMember(dest => dest.ChordCharts, opt=>opt.Ignore());

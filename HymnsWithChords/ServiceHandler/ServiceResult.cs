@@ -9,6 +9,7 @@
 
         private int GetStatusCode()
         {
+            if (Error == null) return 200;
 			if (Error is NotFoundException) return 404;
 			if (Error is BadRequestException) return 400;
 			if (Error is ConflictException) return 409;

@@ -11,5 +11,6 @@ namespace HymnsWithChords.Dtos
 		public int LyricOrder { get; set; }			
 		public string? LyricFilePath { get; set; }
 		public int LyricLineId { get; set; }
+		public int? ChordId { get; set; }
 	}
 }

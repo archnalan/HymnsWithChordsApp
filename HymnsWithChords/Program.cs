@@ -24,6 +24,10 @@ builder.Services.AddHttpContextAccessor();
 
 // Register chart service
 builder.Services.AddScoped<IChordChartService, ChordChartService>();
+builder.Services.AddScoped<IChordService, ChordService>();
+builder.Services.AddScoped<ILyricSegment, LyricSegmentService>();
+builder.Services.AddScoped<ILyricLineService, LyricLineService>();
+builder.Services.AddScoped<IVerseService, VerseService>();
 builder.Services.AddControllers()
 	.AddJsonOptions(options =>
 	{

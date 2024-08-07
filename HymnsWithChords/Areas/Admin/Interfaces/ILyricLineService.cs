@@ -1,4 +1,5 @@
 ﻿using HymnsWithChords.Dtos;
+using HymnsWithChords.Dtos.CompositeDtos;
 using HymnsWithChords.ServiceHandler;
 
 namespace HymnsWithChords.Areas.Admin.Interfaces
@@ -9,7 +10,7 @@ namespace HymnsWithChords.Areas.Admin.Interfaces
 
 		Task<ServiceResult<LyricLineDto>> GetLyricLineByIdAsync(int id);
 
-		Task<ServiceResult<LyricLineDto>> CreateVerseLineAsync(LyricLineCreateDto verselineDto);
+		Task<ServiceResult<LyricLineDto>> CreateVerseLineAsync(LineVerseCreateDto verselineDto);
 
 		Task<ServiceResult<LyricLineDto>> EditVerseLineAsync(int id, LyricLineDto verseLineDto);
 

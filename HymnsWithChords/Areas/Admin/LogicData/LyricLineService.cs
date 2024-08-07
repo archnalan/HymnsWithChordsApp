@@ -2,6 +2,7 @@
 using HymnsWithChords.Areas.Admin.Interfaces;
 using HymnsWithChords.Data;
 using HymnsWithChords.Dtos;
+using HymnsWithChords.Dtos.CompositeDtos;
 using HymnsWithChords.Models;
 using HymnsWithChords.ServiceHandler;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,7 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 			return ServiceResult<LyricLineDto>.Success(lyricLineDto);
 		}
 
-		public async Task<ServiceResult<LyricLineDto>> CreateVerseLineAsync(LyricLineCreateDto verselineDto)
+		public async Task<ServiceResult<LyricLineDto>> CreateVerseLineAsync(LineVerseCreateDto verselineDto)
 		{
 			if (verselineDto == null)
 				return ServiceResult<LyricLineDto>.Failure( new 

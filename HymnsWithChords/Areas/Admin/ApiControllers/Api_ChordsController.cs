@@ -384,7 +384,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 					errors.Add($"Chord: {chordDto.ChordName} already exists");
 					continue;
 				}
-				var chordTupple = (chordDto.ChordName, chordDto.Difficulty);
+				var chordTupple = (chordDto.ChordName, chordDto.ChordDifficulty);
 
 				if (noRepeatChords.Contains(chordTupple))
 				{

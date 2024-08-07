@@ -45,6 +45,18 @@ namespace HymnsWithChords.Controllers
 			return Ok(sortedHymns);
 		}
 
+		[HttpGet("{id}")]
+		public async Task<IActionResult> GetHymnById(int id)
+		{
+			var hymn = await _context.Hymns
+						.Include(h => h.Verses)
+						.ThenInclude(v => v.LyricLines)
+						.ThenInclude(ll => ll.LyricSegments)
+						.FirstOrDefaultAsync(h => h.Id == id);
+
+			//hymnDto
+			return Ok(hymn);
+		}
 
 		[HttpGet("chords")]
 		public async Task<IActionResult> GetHymnsWithChords()

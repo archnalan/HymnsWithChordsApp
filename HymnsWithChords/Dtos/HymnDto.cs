@@ -28,7 +28,7 @@ namespace HymnsWithChords.Dtos
 		public string? History { get; set; }
 
 		[StringLength(200)]
-		public string AddedBy { get; set; }
+		public string? AddedBy { get; set; }
 
 		public DateTime AddedDate { get; set; }
 		
