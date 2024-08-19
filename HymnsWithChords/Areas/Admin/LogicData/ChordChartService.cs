@@ -43,6 +43,18 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 
 			var chordChartsDto = _mapper.Map<List<ChartEditDto>>(chordCharts);
 
+			string baseUrl = $"{_contextAccessor.HttpContext.Request.Scheme}://{_contextAccessor.HttpContext.Request.Host}/lib/media/charts/";
+
+			foreach(var chartDto in chordChartsDto)
+			{
+				chartDto.FilePath = $"{baseUrl}{chartDto.FilePath}";
+
+				if (!string.IsNullOrEmpty(chartDto.ChartAudioFilePath))
+				{
+					chartDto.ChartAudioFilePath = $"{baseUrl}audio/{chartDto.ChartAudioFilePath}";
+				}
+			}
+
 			return ServiceResult<List<ChartEditDto>>.Success(chordChartsDto);
 
 		}

@@ -4,6 +4,7 @@ namespace HymnsWithChords.Dtos.WithUploads
 {
 	public class ChartWithUploadsDto
 	{
+		public int Id { get; set; }
 		public string FilePath { get; set; }
 		public int? ChordId { get; set; }
 
