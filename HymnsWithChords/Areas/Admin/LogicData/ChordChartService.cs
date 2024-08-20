@@ -47,9 +47,13 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 
 			foreach(var chartDto in chordChartsDto)
 			{
-				chartDto.FilePath = $"{baseUrl}{chartDto.FilePath}";
+				if (!chartDto.FilePath.StartsWith(baseUrl))
+				{
+					chartDto.FilePath = $"{baseUrl}{chartDto.FilePath}";
+				}
 
-				if (!string.IsNullOrEmpty(chartDto.ChartAudioFilePath))
+				if (!string.IsNullOrEmpty(chartDto.ChartAudioFilePath) && 
+					!chartDto.ChartAudioFilePath.StartsWith(baseUrl))
 				{
 					chartDto.ChartAudioFilePath = $"{baseUrl}audio/{chartDto.ChartAudioFilePath}";
 				}
@@ -71,16 +75,19 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 
 			string baseUrl = $"{_contextAccessor.HttpContext.Request.Scheme}://{_contextAccessor.HttpContext.Request.Host}/lib/media/charts/";
 
-			chordChartDto.FilePath = $"{baseUrl}{chordChartDto.FilePath}";
+			if (!chordChartDto.FilePath.StartsWith(baseUrl))
+			{
+				chordChartDto.FilePath = $"{baseUrl}{chordChartDto.FilePath}";
+			}
 
-			if (!string.IsNullOrEmpty(chordChartDto.ChartAudioFilePath))
+			if (!string.IsNullOrEmpty(chordChartDto.ChartAudioFilePath) && !chordChartDto.ChartAudioFilePath.StartsWith(baseUrl))
 			{
 				chordChartDto.ChartAudioFilePath = $"{baseUrl}audio/{chordChartDto.ChartAudioFilePath}";
 			}
 
 			return ServiceResult<ChartWithUploadsDto>.Success(chordChartDto);
-
 		}
+
 
 
 		public async Task<ServiceResult<ChordChart>> GetChordChartWithChordByIdAsync(int id)
@@ -93,9 +100,13 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 			{
 				string baseUrl = $"{_contextAccessor.HttpContext.Request.Scheme}://{_contextAccessor.HttpContext.Request.Host}/lib/media/charts/";
 
-				chordChart.FilePath = $"{baseUrl}{chordChart.FilePath}";
+				if (!chordChart.FilePath.StartsWith(baseUrl))
+				{
+					chordChart.FilePath = $"{baseUrl}{chordChart.FilePath}";
+				}
 
-				if (!string.IsNullOrEmpty(chordChart.ChartAudioFilePath))
+				if (!string.IsNullOrEmpty(chordChart.ChartAudioFilePath) 
+					&& !chordChart.ChartAudioFilePath.StartsWith(baseUrl))
 				{
 					chordChart.ChartAudioFilePath = $"{baseUrl}audio/{chordChart.ChartAudioFilePath}";
 				}				
@@ -262,12 +273,12 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 				.AnyAsync(ch => ch.FilePath.EndsWith(chartEditDto.FilePath) 
 				&& ch.FretPosition == chartEditDto.FretPosition);
 
-			if (chartExists) return ServiceResult<ChartEditDto>.Failure(
-				new ConflictException($"Chart with file path: {chartEditDto.FilePath} already exists at fret {chartEditDto.FretPosition}."));
-
 			var upload = chartEditDto.ChartUpload;
 			string defaultFile = "No-Image-Placeholder.svg.png";
 			string uploadDirPath = "lib/media/charts";
+
+			if (chartExists && !chartEditDto.FilePath.EndsWith(defaultFile)) return ServiceResult<ChartEditDto>.Failure(
+				new ConflictException($"Chart with file path: {chartEditDto.FilePath} already exists at fret {chartEditDto.FretPosition}."));
 
 			string incomingFile = chartEditDto.FilePath;
 
@@ -275,7 +286,7 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 									.Where(ch => ch.Id == chartEditDto.Id)
 									.AnyAsync(ch=>incomingFile.Contains (ch.FilePath));
 
-			if (upload != null)
+			if (upload != null && chartNotChanged == false)
 			{
 				var uploadResult = await HandleFileUpload(upload, uploadDirPath);
 
@@ -283,30 +294,6 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 					return ServiceResult<ChartEditDto>.Failure(uploadResult.Error);
 
 				chartEditDto.FilePath = uploadResult.Data;
-			}
-			else
-			{
-				// Prevent override of existing chart
-				if (chartNotChanged == false)
-				{
-					chartEditDto.FilePath = defaultFile;
-				}
-			}
-
-
-
-
-			if (!string.IsNullOrEmpty(chartEditDto.ChartAudioFilePath))
-			{
-				//unique audio file paths per fret position
-				var isRepeatAudio = await _context.ChordCharts
-									.Where(ch => ch.Id != chartEditDto.Id)
-									.AnyAsync(ch => !string.IsNullOrEmpty( ch.ChartAudioFilePath) && ch.ChartAudioFilePath.EndsWith(chartEditDto.ChartAudioFilePath)
-									&& ch.FretPosition == chartEditDto.FretPosition);
-
-				if (isRepeatAudio) return ServiceResult<ChartEditDto>.Failure(
-					new ConflictException($"Chart with audio path: {chartEditDto.FilePath} already in use at fret {chartEditDto.FretPosition}"));
-
 			}
 
 			var audioUpload = chartEditDto.ChartAudioUpload;
@@ -317,6 +304,18 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 
 			if(incomingAudio != null)
 			{
+				if (!string.IsNullOrEmpty(incomingAudio) && !incomingAudio.EndsWith(defaultAudio))
+				{
+					//unique audio file paths per fret position
+					var isRepeatAudio = await _context.ChordCharts
+										.Where(ch => ch.Id != chartEditDto.Id)
+										.AnyAsync(ch => !string.IsNullOrEmpty(ch.ChartAudioFilePath) && ch.ChartAudioFilePath.EndsWith(chartEditDto.ChartAudioFilePath)
+										&& ch.FretPosition == chartEditDto.FretPosition);
+
+					if (isRepeatAudio) return ServiceResult<ChartEditDto>.Failure(
+						new ConflictException($"Chart with audio path: {chartEditDto.FilePath} already in use at fret {chartEditDto.FretPosition}"));
+
+				}
 				var audioNotChanged = await _context.ChordCharts
 										.Where(ch => ch.Id == chartEditDto.Id && chartEditDto.ChartAudioFilePath != null)
 										.AnyAsync(ch => ch.ChartAudioFilePath != null && incomingAudio.Contains(ch.ChartAudioFilePath));
@@ -329,15 +328,8 @@ namespace HymnsWithChords.Areas.Admin.LogicData
 
 					chartEditDto.ChartAudioFilePath = audioUploadResult.Data;
 				}
-				else
-				{
-					if (audioNotChanged == false)
-					{
-						chartEditDto.ChartAudioFilePath = defaultAudio;
-					}
-				}
-			}
-			
+				
+			}			
 
 			_mapper.Map(chartEditDto, chartInDb);
 			try
