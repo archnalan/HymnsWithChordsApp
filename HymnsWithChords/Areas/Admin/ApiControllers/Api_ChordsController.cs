@@ -69,7 +69,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			var chordDto = _mapper.Map<Chord, ChordEditDto>(chord);
 
 			return Ok(chordDto);
-		}
+		}		
 
 		//GET admin/api_chrds/chords/5
 		[HttpGet]

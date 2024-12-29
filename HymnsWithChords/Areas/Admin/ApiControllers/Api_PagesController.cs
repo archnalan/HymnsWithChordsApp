@@ -59,9 +59,9 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 			pageDto.Slug = pageDto.Title.ToLower().Replace(" ", "-");
 			pageDto.Sorting = 100;
 
-			var slug = await _context.Pages.FirstOrDefaultAsync(s => s.Slug == pageDto.Slug);
+			var pageExists = await _context.Pages.AnyAsync(s => s.Slug == pageDto.Slug);
 
-			if (slug != null) Conflict("The Page Already Exists.");
+			if (pageExists) return Conflict($"The Page {pageDto.Title} Already Exists.");
 
 			var page = _mapper.Map<PageDto, Page>(pageDto);
 

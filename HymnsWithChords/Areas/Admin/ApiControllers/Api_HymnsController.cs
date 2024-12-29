@@ -53,7 +53,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		{
 			var hymn = await _context.Hymns.FindAsync(id);
 
-			if(hymn == null) return NotFound($"Hymn of ID:{id} does not exist.");
+			if(hymn == null) return NotFound($"Song of ID:{id} does not exist.");
 
 			var hymnDto = _mapper.Map<HymnDto>(hymn);
 
@@ -66,7 +66,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 							.Include(h=>h.Category)
 							.FirstOrDefaultAsync(h=>h.Id == id);
 
-			if(hymn == null) return NotFound($"Hymn of ID:{id} does not exist.");
+			if(hymn == null) return NotFound($"Song of ID:{id} does not exist.");
 
 			var hymnDto = _mapper.Map<HymnDto>(hymn);
 
@@ -76,7 +76,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		[HttpGet("by_ids")]
 		public async Task<IActionResult> GetHymnsByIds(List<int> ids)
 		{
-			if (ids == null || ids.Count == 0) return BadRequest("Hymn Ids are required.");
+			if (ids == null || ids.Count == 0) return BadRequest("Song Ids are required.");
 			
 			var hymns = await _context.Hymns
 						.Where(h=>ids.Contains(h.Id))
@@ -103,7 +103,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		[HttpPost("create")]
 		public async Task<IActionResult> Create(HymnCreateDto createDto)
 		{
-			if (createDto == null) return BadRequest("Hymn data is required.");
+			if (createDto == null) return BadRequest("Song data is required.");
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -113,13 +113,13 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 			var hymnExists = await _context.Hymns.AnyAsync(hE=>hE.Slug ==  createDto.Slug);
 
-			if (hymnExists) return Conflict($"Hymn: {createDto.Title} already exists.");
+			if (hymnExists) return Conflict($"Song: {createDto.Title} already exists.");
 
 			var categoryExists = await _context.Categories									
 									.FirstOrDefaultAsync(hC=>hC.Id==createDto.CategoryId);
 
 			if (categoryExists == null)
-				return BadRequest($"Hymn Category of ID: {createDto.CategoryId} does not exist.");
+				return BadRequest($"Song Category of ID: {createDto.CategoryId} does not exist.");
 
 			var hymn = _mapper.Map<Hymn>(createDto);
 
@@ -141,16 +141,16 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		[HttpPut("edit/{id}")]
 		public async Task<IActionResult> Edit(int id, HymnDto hymnDto)
 		{
-			if (hymnDto == null) return BadRequest("Hymn Data is required");
+			if (hymnDto == null) return BadRequest("Song Data is required");
 
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
 			if (id != hymnDto.Id) 
-				return BadRequest($"Invalid Attempt! Hymns with Ids {id} and {hymnDto.Id} are not the same.");
+				return BadRequest($"Invalid Attempt! Songs with Ids {id} and {hymnDto.Id} are not the same.");
 
 			var hymnInDb = await _context.Hymns.FindAsync(id);
 
-			if (hymnInDb == null) return NotFound($"Hymn with ID: {id} does not exist.");
+			if (hymnInDb == null) return NotFound($"Song with ID: {id} does not exist.");
 
 			hymnDto.Slug = hymnDto.Title.ToLower().Replace(" ", "-");
 			hymnDto.AddedDate = DateTime.Now;
@@ -160,27 +160,37 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 								.Where(hE=>hE.Id != id)
 								.AnyAsync(hE => hE.Slug == hymnDto.Slug);
 
-			if (hymnExists) return Conflict($"Hymn: {hymnDto.Title} already exists.");
+			if (hymnExists) return Conflict($"Song: {hymnDto.Title} already exists.");
 
 			var categoryExists = await _context.Categories
 									.FirstOrDefaultAsync(hC => hC.Id == hymnDto.CategoryId);
 
 			if (categoryExists == null)
-				return BadRequest($"Hymn Category of ID: {hymnDto.CategoryId} does not exist.");
+				return BadRequest($"Song Category of ID: {hymnDto.CategoryId} does not exist.");
 
-			var editedHymn = _mapper.Map(hymnDto, hymnInDb);
+            try
+            {
+                // Map updated values from hymnDto to hymnInDb
+                hymnInDb.Number = hymnDto.Number;
+                hymnInDb.Title = hymnDto.Title ?? hymnInDb.Title;
+                hymnInDb.Slug = hymnDto.Slug;
+                hymnInDb.WrittenDateRange = hymnDto.WrittenDateRange ?? hymnInDb.WrittenDateRange;
+                hymnInDb.WrittenBy = hymnDto.WrittenBy ?? hymnInDb.WrittenBy;
+                hymnInDb.History = hymnDto.History ?? hymnInDb.History;
+                hymnInDb.AddedBy = hymnDto.AddedBy ?? hymnInDb.AddedBy;
+                hymnInDb.AddedDate = hymnDto.AddedDate;
+                hymnInDb.CategoryId = hymnDto.CategoryId;
+                hymnInDb.Category = categoryExists;
 
-			try
-			{
-				_context.Hymns.Update(editedHymn);
-				await _context.SaveChangesAsync();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(ex.Message );
-			}
+                _context.Hymns.Update(hymnInDb);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
-			var editedHymnDto = _mapper.Map<HymnDto>(editedHymn);
+            var editedHymnDto = _mapper.Map<HymnDto>(hymnInDb);
 
 			return Ok(editedHymnDto);
 		}
@@ -190,7 +200,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		{
 			var hymn = await _context.Hymns.FindAsync(id);
 
-			if (hymn == null) return NotFound($"Hymn with ID:{id} does not exist.");
+			if (hymn == null) return NotFound($"Song with ID:{id} does not exist.");
 
 			try
 			{
@@ -209,7 +219,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 		[HttpDelete("by_ids")]
 		public async Task<IActionResult> DeleteHymns(List<int> ids)
 		{
-			if (ids == null || ids.Count == 0) return BadRequest("Hymn Ids are required.");
+			if (ids == null || ids.Count == 0) return BadRequest("Song Ids are required.");
 
 			var deletedIds = new List<int>();
 			var errors = new List<string>();
@@ -220,7 +230,7 @@ namespace HymnsWithChords.Areas.Admin.ApiControllers
 
 				if (hymn == null)
 				{
-					errors.Add($"Hymn with ID: {id} does not exist.");
+					errors.Add($"Song with ID: {id} does not exist.");
 					continue;
 				}
 				_context.Hymns.Remove(hymn);
